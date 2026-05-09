@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { AUTH_COOKIE_NAME, verifySessionValue } from "@/lib/auth";
 
 const username = process.env.DASHBOARD_AUTH_USER;
 const passwordHash = process.env.DASHBOARD_AUTH_PASSWORD_SHA256?.toLowerCase();
+const sessionSecret = process.env.DASHBOARD_AUTH_SECRET;
 const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
-
-function unauthorized() {
-  return new NextResponse("Acesso restrito.", {
-    status: 401,
-    headers: {
-      "Cache-Control": "no-store",
-      "WWW-Authenticate": 'Basic realm="Painel Dev Murbi", charset="UTF-8"'
-    }
-  });
-}
 
 function authNotConfigured() {
   return new NextResponse("Autenticação não configurada.", {
@@ -23,63 +15,37 @@ function authNotConfigured() {
   });
 }
 
-function parseBasicAuth(header: string | null) {
-  if (!header?.startsWith("Basic ")) {
-    return null;
-  }
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isAuthRoute = pathname === "/login" || pathname.startsWith("/api/auth/");
 
-  try {
-    const decoded = atob(header.slice("Basic ".length));
-    const separatorIndex = decoded.indexOf(":");
-
-    if (separatorIndex === -1) {
-      return null;
+  if (!username || !passwordHash || !sessionSecret) {
+    if (isAuthRoute) {
+      return NextResponse.next();
     }
 
-    return {
-      user: decoded.slice(0, separatorIndex),
-      password: decoded.slice(separatorIndex + 1)
-    };
-  } catch {
-    return null;
-  }
-}
-
-async function sha256Hex(value: string) {
-  const data = new TextEncoder().encode(value);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-
-  return Array.from(new Uint8Array(hash))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-function constantTimeEqual(left: string, right: string) {
-  const maxLength = Math.max(left.length, right.length);
-  let result = left.length ^ right.length;
-
-  for (let index = 0; index < maxLength; index += 1) {
-    result |= (left.charCodeAt(index) || 0) ^ (right.charCodeAt(index) || 0);
-  }
-
-  return result === 0;
-}
-
-export async function middleware(request: NextRequest) {
-  if (!username || !passwordHash) {
     return isProduction ? authNotConfigured() : NextResponse.next();
   }
 
-  const credentials = parseBasicAuth(request.headers.get("authorization"));
+  const isAuthenticated = await verifySessionValue(
+    request.cookies.get(AUTH_COOKIE_NAME)?.value,
+    sessionSecret,
+    username
+  );
 
-  if (!credentials || credentials.user !== username) {
-    return unauthorized();
+  if (isAuthRoute) {
+    if (pathname === "/login" && isAuthenticated) {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    return NextResponse.next();
   }
 
-  const receivedPasswordHash = await sha256Hex(credentials.password);
+  if (!isAuthenticated) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", `${pathname}${request.nextUrl.search}`);
 
-  if (!constantTimeEqual(receivedPasswordHash, passwordHash)) {
-    return unauthorized();
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();

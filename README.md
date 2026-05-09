@@ -8,7 +8,7 @@ O app não substitui o Jira. Ele mostra apenas cards da sprint ativa atual e tra
 
 - Apenas sprint ativa atual
 - Atualização automática a cada 30 segundos
-- Autenticação HTTP Basic sem banco de dados
+- Tela de login sem banco de dados, com sessão em cookie assinado
 - Credenciais do Jira mantidas no servidor por trás de `/api/dashboard`
 - Modo simulado quando credenciais do Jira estão ausentes ou o Jira está indisponível
 - Cards HOTFIX pinados primeiro com destaque visual
@@ -57,15 +57,16 @@ JIRA_BOARD_ID=123
 
 DASHBOARD_AUTH_USER=admin
 DASHBOARD_AUTH_PASSWORD_SHA256=hash_sha256_da_senha
+DASHBOARD_AUTH_SECRET=segredo_para_assinar_sessao
 ```
 
 Se alguma variável do Jira estiver ausente, o app usa automaticamente dados simulados.
 
-Em produção, `DASHBOARD_AUTH_USER` e `DASHBOARD_AUTH_PASSWORD_SHA256` são obrigatórios. Se não forem configurados, a aplicação bloqueia o acesso em vez de ficar pública.
+Em produção, `DASHBOARD_AUTH_USER`, `DASHBOARD_AUTH_PASSWORD_SHA256` e `DASHBOARD_AUTH_SECRET` são obrigatórios. Se não forem configurados, a aplicação bloqueia o acesso em vez de ficar pública.
 
 ## Autenticação
 
-O painel usa HTTP Basic Auth no `middleware.ts`, protegendo páginas e rotas internas antes de qualquer dado do Jira ser entregue ao navegador.
+O painel usa uma tela própria de login em `/login`. Após autenticar, o servidor grava um cookie HttpOnly assinado, protegendo páginas e rotas internas antes de qualquer dado do Jira ser entregue ao navegador.
 
 A senha não deve ser salva em texto puro. Gere o hash SHA-256 da senha:
 
@@ -73,14 +74,21 @@ A senha não deve ser salva em texto puro. Gere o hash SHA-256 da senha:
 npm run auth:hash -- sua-senha-forte-aqui
 ```
 
+Gere também um segredo para assinar a sessão:
+
+```bash
+npm run auth:secret
+```
+
 Configure na Vercel:
 
 ```bash
 DASHBOARD_AUTH_USER=admin
 DASHBOARD_AUTH_PASSWORD_SHA256=resultado_do_comando_acima
+DASHBOARD_AUTH_SECRET=resultado_do_auth_secret
 ```
 
-Use HTTPS, que é o padrão da Vercel. O Basic Auth depende do TLS para proteger usuário e senha em trânsito.
+Use HTTPS, que é o padrão da Vercel. O cookie de sessão é HttpOnly, `SameSite=Lax` e `Secure` em produção.
 
 ## Integração com Jira
 
@@ -140,6 +148,7 @@ npm run build
 npm run lint
 npm run typecheck
 npm run auth:hash -- sua-senha
+npm run auth:secret
 ```
 
 ## Estrutura do Projeto

@@ -7,7 +7,8 @@
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "auth:hash": "node scripts/hash-password.mjs"
+    "auth:hash": "node scripts/hash-password.mjs",
+    "auth:secret": "node scripts/generate-auth-secret.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.7",
