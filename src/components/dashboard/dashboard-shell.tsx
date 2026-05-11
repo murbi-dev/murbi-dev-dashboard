@@ -1,6 +1,7 @@
 "use client";
 
-import { Activity, AlertTriangle, CheckCircle2, Clock, Flame, RefreshCw, Search } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, CheckCircle2, Clock, Flame, RefreshCw, Search } from "lucide-react";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BUSINESS_STATUSES } from "@/lib/status-mapper";
 import { formatRelativeTime } from "@/lib/time";
@@ -13,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { StatusColumn } from "@/components/dashboard/status-column";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
+import { GlobalIssueSearch } from "@/components/dashboard/global-issue-search";
 import { cn } from "@/lib/utils";
 
 type DashboardMode = "standard" | "tv";
@@ -58,7 +60,8 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           !query ||
           issue.key.toLowerCase().includes(query) ||
           issue.title.toLowerCase().includes(query) ||
-          issue.assignee.name.toLowerCase().includes(query);
+          issue.assignee.name.toLowerCase().includes(query) ||
+          issue.jiraStatus.toLowerCase().includes(query);
         const matchesHotfix = !filters.hotfixOnly || issue.isHotfix;
         const matchesAssignee = filters.assignee === "all" || issue.assignee.name === filters.assignee;
         const matchesPriority = filters.priority === "all" || issue.priority === filters.priority;
@@ -83,6 +86,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
   const stats = {
     total: issues.length,
     hotfixes: issues.filter((issue) => issue.isHotfix).length,
+    pendingHotfixes: issues.filter((issue) => issue.isHotfix && issue.businessStatus !== "Done").length,
     development: issues.filter((issue) => issue.businessStatus === "In Development").length,
     validation: issues.filter((issue) => issue.businessStatus === "Validation").length,
     done: issues.filter((issue) => issue.businessStatus === "Done").length
@@ -117,6 +121,17 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
                 {data.warning}
               </Badge>
             ) : null}
+            <Link
+              href="/metrics"
+              className={cn(
+                "inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium transition-colors hover:bg-accent",
+                mode === "tv" ? "h-10 px-4 py-2" : "h-9"
+              )}
+            >
+              <BarChart3 className="h-4 w-4" />
+              Métricas
+            </Link>
+            <GlobalIssueSearch mode={mode} />
             <Button variant="outline" size={mode === "tv" ? "default" : "sm"} onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
               Atualizar
@@ -132,10 +147,10 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
 
         <section className={cn("grid gap-3", mode === "tv" ? "grid-cols-5" : "grid-cols-2 lg:grid-cols-5")}>
           <SummaryCard icon={Activity} label="Cards da sprint" value={stats.total} mode={mode} />
-          <SummaryCard icon={Flame} label="Hotfixes" value={stats.hotfixes} tone="hotfix" mode={mode} />
-          <SummaryCard icon={Clock} label="Em desenvolvimento" value={stats.development} mode={mode} />
-          <SummaryCard icon={Search} label="Em validação" value={stats.validation} mode={mode} />
-          <SummaryCard icon={CheckCircle2} label="Concluídos" value={stats.done} tone="done" mode={mode} />
+          <SummaryCard icon={Flame} label="Hotfixes" value={`${stats.pendingHotfixes}/${stats.hotfixes}`} tone="hotfix" mode={mode} />
+          <SummaryCard icon={Clock} label="Em Desenvolvimento" value={stats.development} mode={mode} />
+          <SummaryCard icon={Search} label="Em Teste" value={stats.validation} mode={mode} />
+          <SummaryCard icon={CheckCircle2} label="Em Produção" value={stats.done} tone="done" mode={mode} />
         </section>
 
         {mode === "standard" ? (

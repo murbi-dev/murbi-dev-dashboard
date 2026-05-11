@@ -2,10 +2,10 @@ import type { BusinessStatus, IssuePriority } from "@/types/dashboard";
 
 export const businessStatusLabels: Record<BusinessStatus, string> = {
   Waiting: "Pendente",
-  "In Development": "Em desenvolvimento",
-  Validation: "Validação",
-  Finalizing: "Finalizando",
-  Done: "Concluído"
+  "In Development": "Em Desenvolvimento",
+  Validation: "Em Teste",
+  Finalizing: "Aguardando Deploy",
+  Done: "Em Produção"
 };
 
 export const priorityLabels: Record<IssuePriority, string> = {

@@ -1,0 +1,26 @@
+export type IssueSearchResult = {
+  id: string;
+  key: string;
+  title: string;
+  jiraStatus: string;
+  assignee: {
+    name: string;
+    avatarUrl?: string;
+  };
+  isHotfix: boolean;
+  updatedAt: string;
+  sprint?: {
+    name: string;
+    state?: "active" | "closed" | "future";
+  };
+  locationLabel: string;
+  url?: string;
+};
+
+export type IssueSearchPayload = {
+  query: string;
+  results: IssueSearchResult[];
+  source: "jira" | "mock";
+  fetchedAt: string;
+  warning?: string;
+};

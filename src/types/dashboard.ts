@@ -11,6 +11,16 @@ export type DashboardIssue = {
   id: string;
   key: string;
   title: string;
+  issueType: {
+    name: string;
+    iconUrl?: string;
+  };
+  storyPoints?: number;
+  epic?: {
+    key?: string;
+    name?: string;
+    color?: string;
+  };
   assignee: {
     name: string;
     avatarUrl?: string;

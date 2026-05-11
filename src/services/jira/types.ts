@@ -4,6 +4,7 @@ export type JiraSprint = {
   state: "active" | "closed" | "future";
   startDate?: string;
   endDate?: string;
+  completeDate?: string;
 };
 
 export type JiraIssue = {
@@ -16,14 +17,29 @@ export type JiraIssue = {
     status: {
       name: string;
     };
+    issuetype: {
+      name: string;
+      iconUrl?: string;
+    };
     priority?: {
       name: string;
+    };
+    parent?: {
+      key: string;
+      fields?: {
+        summary?: string;
+        issuetype?: {
+          name: string;
+          hierarchyLevel?: number;
+        };
+      };
     };
     assignee?: {
       displayName: string;
       avatarUrls?: Record<string, string>;
     };
     statuscategorychangedate?: string;
+    [fieldId: string]: unknown;
   };
   changelog?: {
     histories: Array<{
@@ -38,6 +54,26 @@ export type JiraIssue = {
     }>;
   };
 };
+
+export type JiraField = {
+  id: string;
+  name: string;
+  schema?: {
+    type?: string;
+    custom?: string;
+  };
+};
+
+export type JiraBoardConfiguration = {
+  estimation?: {
+    type?: string;
+    field?: {
+      fieldId?: string;
+      displayName?: string;
+    };
+  };
+};
+
 
 export type JiraSearchResponse = {
   startAt: number;

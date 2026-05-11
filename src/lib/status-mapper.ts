@@ -10,8 +10,8 @@ export const BUSINESS_STATUSES: BusinessStatus[] = [
 
 export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
   Waiting: ["To Do", "Tarefas pendentes"],
-  "In Development": ["In Progress", "Em andamento"],
-  Validation: ["Pull Request", "Pull request", "Pronto para QA", "QA", "GQ"],
+  "In Development": ["In Progress", "Em andamento", "Pull Request", "Pull request", "Pronto para QA"],
+  Validation: ["QA", "GQ"],
   Finalizing: ["PRONTO PARA PROD"],
   Done: ["Done", "Concluído", "Concluido", "Rejeitado"]
 };

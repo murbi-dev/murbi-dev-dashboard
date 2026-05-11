@@ -3,6 +3,8 @@ import { IssueCard } from "@/components/cards/issue-card";
 import { cn } from "@/lib/utils";
 import { getBusinessStatusLabel } from "@/lib/display";
 
+const developmentStatusOrder = ["Em andamento", "In Progress", "Pull Request", "Pull request", "Pronto para QA"];
+
 const statusAccent: Record<BusinessStatus, string> = {
   Waiting: "bg-slate-500",
   "In Development": "bg-blue-600",
@@ -20,24 +22,60 @@ export function StatusColumn({
   issues: DashboardIssue[];
   mode: "standard" | "tv";
 }) {
+  const jiraStatusCounts = Array.from(
+    issues.reduce((acc, issue) => {
+      acc.set(issue.jiraStatus, (acc.get(issue.jiraStatus) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>())
+  ).sort(([statusA], [statusB]) => {
+    const orderA = developmentStatusOrder.indexOf(statusA);
+    const orderB = developmentStatusOrder.indexOf(statusB);
+
+    if (orderA !== -1 || orderB !== -1) {
+      const normalizedOrderA = orderA === -1 ? Number.MAX_SAFE_INTEGER : orderA;
+      const normalizedOrderB = orderB === -1 ? Number.MAX_SAFE_INTEGER : orderB;
+
+      return normalizedOrderA - normalizedOrderB;
+    }
+
+    return statusA.localeCompare(statusB, "pt-BR");
+  });
+
   return (
     <div className="min-w-0 rounded-lg border bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b p-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={cn("h-2.5 w-2.5 rounded-full", statusAccent[status])} />
-          <h2 className={cn("truncate font-semibold", mode === "tv" ? "text-xl" : "text-sm")}>
-            {getBusinessStatusLabel(status)}
-          </h2>
+      <div className="border-b p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className={cn("h-2.5 w-2.5 rounded-full", statusAccent[status])} />
+            <h2 className={cn("truncate font-semibold", mode === "tv" ? "text-xl" : "text-sm")}>
+              {getBusinessStatusLabel(status)}
+            </h2>
+          </div>
+          <span className={cn("rounded-md bg-muted px-2 py-1 font-semibold", mode === "tv" ? "text-lg" : "text-xs")}>
+            {issues.length}
+          </span>
         </div>
-        <span className={cn("rounded-md bg-muted px-2 py-1 font-semibold", mode === "tv" ? "text-lg" : "text-xs")}>
-          {issues.length}
-        </span>
+        {status === "In Development" && jiraStatusCounts.length ? (
+          <dl className={cn("mt-3 grid gap-1 text-muted-foreground", mode === "tv" ? "text-sm" : "text-xs")}>
+            {jiraStatusCounts.map(([jiraStatus, count]) => (
+              <div key={jiraStatus} className="flex min-w-0 items-center justify-between gap-2">
+                <dt className="truncate">{jiraStatus}</dt>
+                <dd className="shrink-0 font-semibold text-foreground">{count}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : null}
       </div>
       <div className={cn("flex flex-col gap-3 p-3", mode === "tv" ? "max-h-[64vh] overflow-hidden" : "min-h-40")}>
         {issues.length ? (
           issues.map((issue) => <IssueCard key={issue.id} issue={issue} mode={mode} />)
         ) : (
-          <div className={cn("rounded-md border border-dashed p-4 text-center text-muted-foreground", mode === "tv" ? "text-base" : "text-sm")}>
+          <div
+            className={cn(
+              "rounded-md border border-dashed p-4 text-center text-muted-foreground",
+              mode === "tv" ? "text-base" : "text-sm"
+            )}
+          >
             Sem cards
           </div>
         )}

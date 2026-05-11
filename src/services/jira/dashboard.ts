@@ -1,21 +1,29 @@
 import { getJiraConfig } from "@/services/jira/config";
 import { JiraClient } from "@/services/jira/client";
-import { normalizeJiraIssue, normalizeSprint } from "@/services/jira/normalize";
+import { normalizeJiraIssue, normalizeSprint, type JiraEpicDetailsByKey } from "@/services/jira/normalize";
+import { getCachedFieldMetadata } from "@/services/jira/metadata";
 import type { DashboardPayload } from "@/types/dashboard";
+import type { JiraDashboardFieldMetadata } from "@/services/jira/field-metadata";
 import type { JiraSearchResponse, JiraSprintResponse } from "./types";
 import { getMockDashboard } from "./mock-data";
 
-const jiraIssueFields = [
+const baseJiraIssueFields = [
   "summary",
   "status",
+  "issuetype",
   "priority",
   "assignee",
+  "parent",
   "created",
   "updated",
   "statuscategorychangedate"
-].join(",");
+];
 
-async function fetchAllBoardSprintIssues(client: JiraClient, boardId: string, sprintId: number) {
+function buildJiraIssueFields(fieldIds: Array<string | undefined>): string {
+  return Array.from(new Set([...baseJiraIssueFields, ...fieldIds.filter((fieldId): fieldId is string => Boolean(fieldId))])).join(",");
+}
+
+async function fetchAllBoardSprintIssues(client: JiraClient, boardId: string, sprintId: number, issueFields: string) {
   const maxResults = 100;
   const issues: JiraSearchResponse["issues"] = [];
   let startAt = 0;
@@ -24,7 +32,7 @@ async function fetchAllBoardSprintIssues(client: JiraClient, boardId: string, sp
 
   while (startAt < total) {
     const issueResponse = await client.get<JiraSearchResponse>(
-      `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${jiraIssueFields}&expand=changelog&startAt=${startAt}&maxResults=${maxResults}`
+      `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${issueFields}&expand=changelog&startAt=${startAt}&maxResults=${maxResults}`
     );
 
     issues.push(...issueResponse.issues);
@@ -40,6 +48,53 @@ async function fetchAllBoardSprintIssues(client: JiraClient, boardId: string, sp
   return issues;
 }
 
+function getIssueEpicKey(issue: JiraSearchResponse["issues"][number], fieldMetadata: JiraDashboardFieldMetadata): string | undefined {
+  if (issue.fields.parent?.key) {
+    return issue.fields.parent.key;
+  }
+
+  if (!fieldMetadata.epicLinkFieldId) {
+    return undefined;
+  }
+
+  const epicKey = issue.fields[fieldMetadata.epicLinkFieldId];
+
+  return typeof epicKey === "string" && epicKey.trim() ? epicKey.trim() : undefined;
+}
+
+async function fetchEpicDetailsByKey(
+  client: JiraClient,
+  epicKeys: string[],
+  fieldMetadata: JiraDashboardFieldMetadata
+): Promise<JiraEpicDetailsByKey> {
+  if (epicKeys.length === 0) {
+    return {};
+  }
+
+  const uniqueKeys = Array.from(new Set(epicKeys));
+  const detailsByKey: JiraEpicDetailsByKey = {};
+  const fields = ["summary", fieldMetadata.issueColorFieldId].filter(Boolean).join(",");
+
+  for (let index = 0; index < uniqueKeys.length; index += 50) {
+    const keys = uniqueKeys.slice(index, index + 50);
+    const jql = encodeURIComponent(`key in (${keys.join(",")})`);
+    const response = await client.get<JiraSearchResponse>(
+      `/rest/api/3/search/jql?jql=${jql}&fields=${fields}&maxResults=${keys.length}`
+    );
+
+    for (const issue of response.issues) {
+      const color = fieldMetadata.issueColorFieldId ? issue.fields[fieldMetadata.issueColorFieldId] : undefined;
+
+      detailsByKey[issue.key] = {
+        name: issue.fields.summary,
+        color: typeof color === "string" && color.trim() ? color.trim() : undefined
+      };
+    }
+  }
+
+  return detailsByKey;
+}
+
 export async function getDashboardData(): Promise<DashboardPayload> {
   const config = getJiraConfig();
 
@@ -49,20 +104,32 @@ export async function getDashboardData(): Promise<DashboardPayload> {
 
   try {
     const client = new JiraClient(config);
-    const sprintResponse = await client.get<JiraSprintResponse>(
-      `/rest/agile/1.0/board/${config.boardId}/sprint?state=active`
-    );
+    const [sprintResponse, fieldMetadata] = await Promise.all([
+      client.get<JiraSprintResponse>(`/rest/agile/1.0/board/${config.boardId}/sprint?state=active`),
+      getCachedFieldMetadata(client, config.boardId)
+    ]);
     const activeSprint = sprintResponse.values[0];
 
     if (!activeSprint) {
       return getMockDashboard("Nenhuma sprint ativa encontrada neste board. Usando dados simulados.");
     }
 
-    const issues = await fetchAllBoardSprintIssues(client, config.boardId, activeSprint.id);
+    const issueFields = buildJiraIssueFields([
+      fieldMetadata.storyPointsFieldId,
+      fieldMetadata.epicLinkFieldId,
+      fieldMetadata.epicNameFieldId
+    ]);
+    const issues = await fetchAllBoardSprintIssues(client, config.boardId, activeSprint.id, issueFields);
+    const epicKeys = issues
+      .map((issue) => getIssueEpicKey(issue, fieldMetadata))
+      .filter((epicKey): epicKey is string => Boolean(epicKey));
+    const epicDetailsByKey = await fetchEpicDetailsByKey(client, epicKeys, fieldMetadata);
 
     return {
       sprint: normalizeSprint(activeSprint),
-      issues: issues.map((issue) => normalizeJiraIssue(issue, config.baseUrl, activeSprint)),
+      issues: issues.map((issue) =>
+        normalizeJiraIssue(issue, config.baseUrl, activeSprint, fieldMetadata, epicDetailsByKey)
+      ),
       source: "jira",
       fetchedAt: new Date().toISOString()
     };

@@ -11,7 +11,7 @@ export function SummaryCard({
 }: {
   icon: LucideIcon;
   label: string;
-  value: number;
+  value: number | string;
   tone?: "default" | "hotfix" | "done";
   mode: "standard" | "tv";
 }) {
