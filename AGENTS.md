@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guia operacional para IAs trabalharem no **Painel Dev Murbi** sem depender do contexto do chat.
+Guia operacional para IAs trabalharem no **Murbi Dev Dashboard** sem depender do contexto do chat.
 
 Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arquitetura, autenticação, Jira, status, scripts, envs, fluxo de dados ou padrões relevantes, atualize este documento no mesmo PR/commit.
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Activity, AlertTriangle, BarChart3, CheckCircle2, Clock, Flame, RefreshCw, Search } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { BUSINESS_STATUSES } from "@/lib/status-mapper";
@@ -102,8 +103,16 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         <header className="flex flex-col gap-3 border-b border-border pb-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
+              <Image
+                src="/logo.png"
+                alt="Murbi"
+                width={mode === "tv" ? 44 : 32}
+                height={mode === "tv" ? 44 : 32}
+                priority
+                className="shrink-0 rounded-md"
+              />
               <h1 className={cn("font-semibold tracking-normal", mode === "tv" ? "text-4xl" : "text-2xl")}>
-                Painel Dev Murbi
+                Murbi Dev Dashboard
               </h1>
               <Badge variant={data?.source === "jira" ? "secondary" : "warning"}>
                 {data?.source === "jira" ? "Jira ao vivo" : "Modo simulado"}

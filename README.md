@@ -1,6 +1,6 @@
-# Painel Dev Murbi
+# Murbi Dev Dashboard
 
-O Painel Dev Murbi é uma camada de visibilidade operacional em tempo real sobre a sprint do Jira. Ele foi criado para times de suporte, negócio, operações e gestão acompanharem o andamento da sprint atual sem expor toda a complexidade técnica do fluxo do Jira.
+O Murbi Dev Dashboard é uma camada de visibilidade operacional em tempo real sobre a sprint do Jira. Ele foi criado para times de suporte, negócio, operações e gestão acompanharem o andamento da sprint atual sem expor toda a complexidade técnica do fluxo do Jira.
 
 O app não substitui o Jira. Ele mostra apenas cards da sprint ativa atual e traduz os status técnicos para colunas simples, orientadas ao negócio.
 

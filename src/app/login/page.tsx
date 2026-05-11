@@ -11,7 +11,7 @@ export default function LoginPage() {
               Sprint em tempo real
             </div>
             <h1 className="max-w-2xl text-5xl font-semibold leading-tight tracking-normal text-foreground">
-              Painel Dev Murbi
+              Murbi Dev Dashboard
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-8 text-muted-foreground">
               Acesso restrito ao acompanhamento operacional da sprint ativa.

@@ -6,8 +6,12 @@ import { QueryProvider } from "@/components/layout/query-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Painel Dev Murbi",
-  description: "Painel operacional de acompanhamento da sprint da Murbi"
+  title: "Murbi Dev Dashboard",
+  description: "Painel operacional de acompanhamento da sprint da Murbi",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/logo.png"
+  }
 };
 
 export default function RootLayout({
