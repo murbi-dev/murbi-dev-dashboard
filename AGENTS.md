@@ -202,7 +202,7 @@ Mapeamento atual:
 | `Waiting` | Pendente | `To Do`, `Tarefas pendentes` |
 | `In Development` | Em Desenvolvimento | `In Progress`, `Em andamento`, `Pull Request`, `Pull request`, `Pronto para QA` |
 | `Validation` | Em Teste | `QA`, `GQ` |
-| `Finalizing` | Aguardando Deploy | `PRONTO PARA PROD` |
+| `Finalizing` | Aguardando Deploy | `Pronto para PROD` |
 | `Done` | Em Produção | `Done`, `Concluído`, `Concluido`, `Rejeitado` |
 
 Regras:

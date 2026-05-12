@@ -119,7 +119,7 @@ O mapeamento centralizado fica em `src/lib/status-mapper.ts`.
 | Pendente | To Do, Tarefas pendentes |
 | Em desenvolvimento | In Progress, Em andamento |
 | Validação | Pull Request, Pull request, Pronto para QA, QA, GQ |
-| Finalizando | PRONTO PARA PROD |
+| Finalizando | Pronto para PROD |
 | Concluído | Done, Concluído, Concluido, Rejeitado |
 
 ## Regra de HOTFIX

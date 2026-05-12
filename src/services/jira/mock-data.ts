@@ -117,7 +117,7 @@ export function getMockDashboard(warning?: string): DashboardPayload {
       issue(
         "MRB-391",
         "Exportação operacional para revisão mensal",
-        "PRONTO PARA PROD",
+        "Pronto para PROD",
         "Task",
         1,
         { key: "MRB-104", name: "Operações" },
