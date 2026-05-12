@@ -68,8 +68,8 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
       </Button>
 
       {isOpen ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/35 p-3 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="mx-auto mt-[8vh] flex max-h-[82vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border bg-white shadow-2xl">
+        <div className="fixed inset-0 z-50 bg-slate-950/45 p-3 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="mx-auto mt-[8vh] flex max-h-[82vh] w-full max-w-3xl flex-col overflow-hidden rounded-lg border bg-card text-card-foreground shadow-2xl">
             <div className="flex items-center gap-3 border-b p-3">
               <Search className="h-5 w-5 text-muted-foreground" />
               <Input
@@ -87,7 +87,7 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
 
             <div className="min-h-64 overflow-y-auto p-2">
               {data?.warning ? (
-                <div className="mb-2 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                <div className="mb-2 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/40 dark:text-amber-200">
                   <AlertTriangle className="h-4 w-4" />
                   {data.warning}
                 </div>
@@ -106,7 +106,7 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
               ) : null}
 
               {error ? (
-                <div className="px-4 py-14 text-center text-sm text-red-700">
+                <div className="px-4 py-14 text-center text-sm text-red-700 dark:text-red-300">
                   Não foi possível buscar issues agora.
                 </div>
               ) : null}

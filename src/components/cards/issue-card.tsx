@@ -11,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const priorityClass: Record<string, string> = {
-  Highest: 'border-red-300 bg-red-100 text-red-800',
-  High: 'border-orange-300 bg-orange-100 text-orange-800',
-  Medium: 'border-sky-300 bg-sky-100 text-sky-800',
-  Low: 'border-slate-300 bg-slate-100 text-slate-700',
-  Lowest: 'border-slate-300 bg-slate-50 text-slate-600',
-  Unknown: 'border-slate-300 bg-slate-50 text-slate-600',
+  Highest: 'border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/60 dark:text-red-200',
+  High: 'border-orange-300 bg-orange-100 text-orange-800 dark:border-orange-800 dark:bg-orange-950/60 dark:text-orange-200',
+  Medium: 'border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-800 dark:bg-sky-950/60 dark:text-sky-200',
+  Low: 'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+  Lowest: 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
+  Unknown: 'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
 };
 
 export function IssueCard({
@@ -35,13 +35,13 @@ export function IssueCard({
     <article
       className={cn(
         'group rounded-lg border bg-card p-3 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-operational',
-        issue.isHotfix && 'border-red-300 bg-red-50 ring-1 ring-red-200',
+        issue.isHotfix && 'border-red-300 bg-red-50 ring-1 ring-red-200 dark:border-red-900/80 dark:bg-red-950/40 dark:ring-red-900/70',
         staleLevel === 'warning' &&
           !issue.isHotfix &&
-          'border-amber-300 bg-amber-50',
+          'border-amber-300 bg-amber-50 dark:border-yellow-600/70 dark:bg-yellow-950/30',
         staleLevel === 'critical' &&
           !issue.isHotfix &&
-          'border-orange-400 bg-orange-50',
+          'border-orange-400 bg-orange-50 dark:border-amber-500/80 dark:bg-amber-950/45 dark:ring-1 dark:ring-amber-400/20',
         mode === 'tv' && 'p-4',
       )}
     >
@@ -101,7 +101,7 @@ export function IssueCard({
       {issue.epic?.key || issue.epic?.name ? (
         <Badge
           variant="outline"
-          className="mt-2 max-w-full truncate border border-slate-200 bg-slate-50 font-medium text-slate-700"
+          className="mt-2 max-w-full truncate border border-slate-200 bg-slate-50 font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
         >
           {issue.epic.color ? (
             <span
@@ -155,7 +155,7 @@ export function IssueCard({
           <span
             className={cn(
               'mt-1 flex items-center gap-1 font-semibold',
-              staleLevel === 'critical' ? 'text-orange-700' : 'text-amber-700',
+              staleLevel === 'critical' ? 'text-orange-700 dark:text-orange-200' : 'text-amber-700 dark:text-yellow-200',
             )}
           >
             <AlertTriangle className="h-3.5 w-3.5" />

@@ -19,8 +19,8 @@ export function SummaryCard({
     <Card
       className={cn(
         "border-border shadow-operational",
-        tone === "hotfix" && "border-red-200 bg-red-50",
-        tone === "done" && "border-emerald-200 bg-emerald-50"
+        tone === "hotfix" && "border-red-200 bg-red-50 dark:border-red-900/70 dark:bg-red-950/40",
+        tone === "done" && "border-emerald-200 bg-emerald-50 dark:border-emerald-900/70 dark:bg-emerald-950/40"
       )}
     >
       <CardContent className={cn("flex items-center justify-between p-4", mode === "tv" && "p-5")}>
@@ -32,8 +32,8 @@ export function SummaryCard({
           className={cn(
             "h-6 w-6 text-muted-foreground",
             mode === "tv" && "h-8 w-8",
-            tone === "hotfix" && "text-red-600",
-            tone === "done" && "text-emerald-700"
+            tone === "hotfix" && "text-red-600 dark:text-red-300",
+            tone === "done" && "text-emerald-700 dark:text-emerald-300"
           )}
         />
       </CardContent>

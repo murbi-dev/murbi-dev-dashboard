@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 
 type DeveloperMetrics = {
@@ -32,11 +33,11 @@ const statusBarClass: Record<BusinessStatus, string> = {
 };
 
 const statusTextClass: Record<BusinessStatus, string> = {
-  Waiting: "text-slate-700",
-  "In Development": "text-blue-700",
-  Validation: "text-teal-700",
-  Finalizing: "text-amber-700",
-  Done: "text-emerald-700"
+  Waiting: "text-slate-700 dark:text-slate-300",
+  "In Development": "text-blue-700 dark:text-blue-300",
+  Validation: "text-teal-700 dark:text-teal-300",
+  Finalizing: "text-amber-700 dark:text-amber-300",
+  Done: "text-emerald-700 dark:text-emerald-300"
 };
 
 function emptyStatusCounts(): Record<BusinessStatus, number> {
@@ -235,14 +236,17 @@ export function DeveloperMetricsShell() {
               {data?.scope.name} · atualizado {data ? formatRelativeTime(data.fetchedAt) : "agora"}
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4" />
-            Atualizar
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+          </div>
         </header>
 
         {error ? (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
             A API do painel está indisponível. A tela continuará tentando a cada 30 segundos.
           </div>
         ) : null}
@@ -263,7 +267,7 @@ export function DeveloperMetricsShell() {
                 <p className="text-xs font-medium text-muted-foreground">Concluídos</p>
                 <p className="text-2xl font-semibold">{totals.Done}</p>
               </div>
-              <CheckCircle2 className="h-6 w-6 text-emerald-700" />
+              <CheckCircle2 className="h-6 w-6 text-emerald-700 dark:text-emerald-300" />
             </CardContent>
           </Card>
           <Card className="shadow-operational">
@@ -275,13 +279,13 @@ export function DeveloperMetricsShell() {
               <UserCircle2 className="h-6 w-6 text-muted-foreground" />
             </CardContent>
           </Card>
-          <Card className="border-red-200 bg-red-50 shadow-operational">
+          <Card className="border-red-200 bg-red-50 shadow-operational dark:border-red-900/70 dark:bg-red-950/40">
             <CardContent className="flex items-center justify-between p-4">
               <div>
-                <p className="text-xs font-medium text-red-800">HOTFIX</p>
-                <p className="text-2xl font-semibold text-red-800">{hotfixes}</p>
+                <p className="text-xs font-medium text-red-800 dark:text-red-200">HOTFIX</p>
+                <p className="text-2xl font-semibold text-red-800 dark:text-red-200">{hotfixes}</p>
               </div>
-              <Flame className="h-6 w-6 text-red-600" />
+              <Flame className="h-6 w-6 text-red-600 dark:text-red-300" />
             </CardContent>
           </Card>
         </section>

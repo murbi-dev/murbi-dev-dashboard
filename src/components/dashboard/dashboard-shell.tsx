@@ -16,6 +16,7 @@ import { SummaryCard } from "@/components/dashboard/summary-card";
 import { StatusColumn } from "@/components/dashboard/status-column";
 import { DashboardSkeleton } from "@/components/dashboard/dashboard-skeleton";
 import { GlobalIssueSearch } from "@/components/dashboard/global-issue-search";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
 
 type DashboardMode = "standard" | "tv";
@@ -199,6 +200,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
               Métricas
             </Link>
             <GlobalIssueSearch mode={mode} />
+            <ThemeToggle />
             <Button variant="outline" size={mode === "tv" ? "default" : "sm"} onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
               Atualizar
@@ -207,7 +209,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         </header>
 
         {error ? (
-          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/70 dark:bg-red-950/40 dark:text-red-200">
             A API do painel está indisponível. A tela continuará tentando a cada 30 segundos.
           </div>
         ) : null}

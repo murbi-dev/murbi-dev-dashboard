@@ -316,7 +316,7 @@ Modo TV:
 Padrões reais:
 
 - TailwindCSS;
-- light mode;
+- temas claro e escuro via classe `dark` no `<html>`, tokens em `globals.css` e `ThemeProvider`;
 - tokens em `src/app/globals.css`;
 - `cn` em `src/lib/utils.ts`;
 - ícones com lucide-react;

@@ -47,7 +47,7 @@ export function StatusColumn({
   const hasStatusFilter = selectedJiraStatus !== "all";
 
   return (
-    <div className="min-w-0 rounded-lg border bg-white shadow-sm">
+    <div className="min-w-0 rounded-lg border bg-card text-card-foreground shadow-sm">
       <div className="border-b p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
