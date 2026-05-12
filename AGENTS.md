@@ -199,11 +199,11 @@ Mapeamento atual:
 
 | Interno | Label UI | Jira |
 | --- | --- | --- |
-| `Waiting` | Pendente | `To Do`, `Tarefas pendentes` |
-| `In Development` | Em Desenvolvimento | `In Progress`, `Em andamento`, `Pull Request`, `Pull request`, `Pronto para QA` |
-| `Validation` | Em Teste | `QA`, `GQ` |
+| `Waiting` | Pendente | `Tarefas pendentes` |
+| `In Development` | Em Desenvolvimento | `Em andamento`, `Pull request`, `Pronto para QA` |
+| `Validation` | Em Teste | `Teste QA` |
 | `Finalizing` | Aguardando Deploy | `Pronto para PROD` |
-| `Done` | Em Produção | `Done`, `Concluído`, `Concluido`, `Rejeitado` |
+| `Done` | Em Produção | `Concluído`, `Rejeitado` |
 
 Regras:
 

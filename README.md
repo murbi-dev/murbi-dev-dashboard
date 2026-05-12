@@ -116,11 +116,11 @@ O mapeamento centralizado fica em `src/lib/status-mapper.ts`.
 
 | Status no painel | Status do Jira |
 | --- | --- |
-| Pendente | To Do, Tarefas pendentes |
-| Em desenvolvimento | In Progress, Em andamento |
-| Validação | Pull Request, Pull request, Pronto para QA, QA, GQ |
+| Pendente | Tarefas pendentes |
+| Em desenvolvimento | In Progress, Em andamento, Pull request, Pronto para QA|
+| Validação | Teste QA |
 | Finalizando | Pronto para PROD |
-| Concluído | Done, Concluído, Concluido, Rejeitado |
+| Concluído | Concluído, Rejeitado |
 
 ## Regra de HOTFIX
 
