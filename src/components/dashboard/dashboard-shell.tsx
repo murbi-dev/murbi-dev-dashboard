@@ -28,13 +28,28 @@ const defaultFilters: DashboardFilters = {
   priority: "all"
 };
 
+const priorityOrder: Record<string, number> = {
+  Highest: 0,
+  High: 1,
+  Medium: 2,
+  Low: 3,
+  Lowest: 4,
+  Unknown: 5
+};
+
 function sortIssues(issues: DashboardIssue[]) {
   return [...issues].sort((a, b) => {
     if (a.isHotfix !== b.isHotfix) {
       return a.isHotfix ? -1 : 1;
     }
 
-    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    const priorityDiff = (priorityOrder[a.priority] ?? priorityOrder.Unknown) - (priorityOrder[b.priority] ?? priorityOrder.Unknown);
+
+    if (priorityDiff !== 0) {
+      return priorityDiff;
+    }
+
+    return new Date(a.statusChangedAt).getTime() - new Date(b.statusChangedAt).getTime();
   });
 }
 

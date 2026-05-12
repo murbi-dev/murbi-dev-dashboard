@@ -276,6 +276,12 @@ Dashboard:
 - `SummaryCard` renderiza cards de resumo.
 - `DeveloperMetricsShell` reutiliza `/api/dashboard` e calcula distribuição por responsável client-side.
 
+Ordenação dos cards nas colunas:
+
+- HOTFIX sempre primeiro;
+- depois prioridade Jira da mais alta para a mais baixa (`Highest`, `High`, `Medium`, `Low`, `Lowest`, `Unknown`);
+- depois maior tempo parado no status atual primeiro, usando `statusChangedAt` mais antigo.
+
 Estado:
 
 - React Query para `/api/dashboard`;
