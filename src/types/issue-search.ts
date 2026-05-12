@@ -9,11 +9,6 @@ export type IssueSearchResult = {
   };
   isHotfix: boolean;
   updatedAt: string;
-  sprint?: {
-    name: string;
-    state?: "active" | "closed" | "future";
-  };
-  locationLabel: string;
   url?: string;
 };
 

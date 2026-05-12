@@ -142,7 +142,6 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
                           {issue.title.replace("[HOTFIX]", "").trim()}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span>{issue.locationLabel}</span>
                           <span>{issue.assignee.name}</span>
                           <span>Atualizado {formatRelativeTime(issue.updatedAt)}</span>
                         </div>

@@ -35,15 +35,13 @@ export type DashboardIssue = {
   url?: string;
 };
 
-export type SprintSummary = {
+export type DashboardScope = {
   id: number | string;
   name: string;
-  startedAt?: string;
-  endedAt?: string;
 };
 
 export type DashboardPayload = {
-  sprint: SprintSummary;
+  scope: DashboardScope;
   issues: DashboardIssue[];
   source: "jira" | "mock";
   fetchedAt: string;

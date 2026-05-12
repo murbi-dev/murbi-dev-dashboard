@@ -225,14 +225,14 @@ export function DeveloperMetricsShell() {
                 <ArrowLeft className="h-4 w-4" />
                 Dashboard
               </Link>
-              <h1 className="text-2xl font-semibold tracking-normal">Métricas da Sprint</h1>
+              <h1 className="text-2xl font-semibold tracking-normal">Métricas do Kanban</h1>
               <Badge variant={data?.source === "jira" ? "secondary" : "warning"}>
                 {data?.source === "jira" ? "Jira ao vivo" : "Modo simulado"}
               </Badge>
               {isFetching ? <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data?.sprint.name} · atualizado {data ? formatRelativeTime(data.fetchedAt) : "agora"}
+              {data?.scope.name} · atualizado {data ? formatRelativeTime(data.fetchedAt) : "agora"}
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={() => refetch()}>

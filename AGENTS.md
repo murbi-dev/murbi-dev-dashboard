@@ -7,9 +7,9 @@ Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arq
 ## 1. Contexto Do Produto
 
 - Dashboard operacional sobre Jira para suporte, negócio, operações e gestão.
-- Não é substituto do Jira. Mostra uma visão simplificada da sprint ativa.
-- Foco: leitura rápida, modo TV, cards da sprint atual, HOTFIX, status de negócio e atualização automática.
-- Tela `/metrics` mostra distribuição operacional da sprint por desenvolvedor, sem ranking ou score individual.
+- Não é substituto do Jira. Mostra uma visão simplificada do Kanban contínuo, sem backlog.
+- Foco: leitura rápida, modo TV, cards principais fora do backlog, HOTFIX, status de negócio e atualização automática.
+- Tela `/metrics` mostra distribuição operacional do fluxo por desenvolvedor, sem ranking ou score individual.
 - Interface visível deve ficar em **português do Brasil**.
 - Código, tipos, funções, arquivos e valores internos ficam em **inglês**.
 
@@ -72,7 +72,7 @@ Arquivos críticos:
 | `src/lib/status-mapper.ts` | status Jira -> status de negócio |
 | `src/lib/display.ts` | labels pt-BR para UI |
 | `src/components/dashboard/dashboard-shell.tsx` | estado, filtros, agrupamento e layout do dashboard |
-| `src/components/metrics/developer-metrics-shell.tsx` | métricas da sprint por responsável |
+| `src/components/metrics/developer-metrics-shell.tsx` | métricas do Kanban por responsável |
 
 ## 4. Autenticação
 
@@ -126,13 +126,13 @@ JIRA_BOARD_ID=
 
 Fluxo real:
 
-1. Buscar sprint ativa do board:
+1. Buscar dados do board:
 
 ```text
-/rest/agile/1.0/board/{boardId}/sprint?state=active
+/rest/agile/1.0/board/{boardId}
 ```
 
-2. Buscar cards principais do board nessa sprint:
+2. Buscar cards principais do board fora do backlog:
 
 ```text
 /rest/agile/1.0/board/{boardId}/issue
@@ -141,7 +141,7 @@ Fluxo real:
 JQL obrigatório:
 
 ```text
-Sprint = {sprintId} AND issuetype not in subTaskIssueTypes()
+status != Backlog AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)
 ```
 
 3. Usar paginação (`startAt`, `maxResults=100`).
@@ -149,26 +149,19 @@ Sprint = {sprintId} AND issuetype not in subTaskIssueTypes()
 5. Buscar configuração do board e metadados de campos para detectar campos reais de pontuação e épico.
 6. Normalizar em `src/services/jira/normalize.ts`.
 
-Não voltar para:
-
-```text
-/rest/agile/1.0/sprint/{sprintId}/issue
-```
-
-Esse endpoint já causou divergência de contagem com o Jira porque traz issues associadas à sprint que não aparecem como cards principais do board.
+Não voltar para fluxo baseado em sprint ativa. O dashboard é Kanban contínuo e deve excluir backlog via JQL.
 
 Busca global de issues:
 
 - endpoint separado: `GET /api/issues/search?q=`;
-- não substitui o dashboard da sprint atual;
+- não substitui o dashboard do Kanban;
 - busca sob demanda, com debounce no frontend (~300ms);
 - não carrega backlog inteiro no frontend;
 - se `q` parecer issue key, prioriza JQL `issueKey = KEY`;
 - para texto, usa JQL `summary ~ "termo"`;
 - retorna no máximo 15 resultados;
-- usa campos mínimos: `summary`, `status`, `assignee`, `updated` e campo real `Sprint`;
-- o campo `Sprint` é detectado via `/rest/api/3/field`;
-- localização operacional diferencia sprint atual, próxima sprint, sprint encerrada, concluído e backlog/sem sprint.
+- usa campos mínimos: `summary`, `status`, `assignee`, `updated`;
+- resultados mostram status atual, responsável, última atualização e link para o Jira; não mostram sprint.
 
 ## 6. Mock Mode
 
@@ -203,11 +196,12 @@ Mapeamento atual:
 | `In Development` | Em Desenvolvimento | `Em andamento`, `Pull request`, `Pronto para QA` |
 | `Validation` | Em Teste | `Teste QA` |
 | `Finalizing` | Aguardando Deploy | `Pronto para PROD` |
-| `Done` | Em Produção | `Concluído`, `Rejeitado` |
+| `Done` | Em Produção | `Concluído`, `Concluido` |
 
 Regras:
 
-- Status desconhecido cai em `Waiting`; isso pode esconder status novo do Jira.
+- Status desconhecido não entra no dashboard principal; isso evita exibir status não mapeado como coluna errada.
+- `Backlog` fica fora do dashboard por JQL.
 - Ao investigar cards em coluna errada, agrupe `jiraStatus -> businessStatus` da `/api/dashboard`.
 - Labels visíveis ficam em `src/lib/display.ts`.
 - Cards mostram explicitamente o `jiraStatus` real, além da coluna de negócio.
@@ -253,12 +247,10 @@ Pontuação, tipo e épico:
 `statusChangedAt` é calculado em `normalize.ts` como a maior data entre:
 
 - entrada no status atual via changelog;
-- entrada na sprint ativa via changelog;
-- início da sprint;
 - `statuscategorychangedate`;
 - criação do card.
 
-Motivo: se um card veio do backlog já em `Pendente`, o contador deve começar na entrada da sprint, não na criação antiga.
+Motivo: o contador deve representar há quanto tempo o card está no status atual do fluxo Kanban, não idade total desde criação.
 
 Não remover `expand=changelog` sem substituir esse cálculo.
 
@@ -293,7 +285,7 @@ Estado:
 Tela de métricas:
 
 - rota: `/metrics`;
-- considera apenas cards principais da sprint ativa, vindos do mesmo payload do dashboard;
+- considera apenas cards principais fora do backlog, vindos do mesmo payload do dashboard;
 - agrupa por `assignee.name`;
 - cards sem responsável ficam em `Sem responsável`;
 - mostra total, ativos, concluídos, pendentes, em desenvolvimento, em teste e aguardando deploy;
@@ -440,11 +432,11 @@ Obrigatório:
 - manter código interno em inglês e UI em pt-BR;
 - manter Jira server-side;
 - manter `/api/dashboard` como contrato do frontend;
-- manter query do board com sprint e sem subtarefas;
+- manter query do board sem backlog e sem subtarefas;
 - manter paginação;
 - manter mock data compatível com tipos reais;
 - preservar HOTFIX pinado;
-- preservar cálculo de idade no status dentro da sprint.
+- preservar cálculo de idade no status atual.
 
 Evitar:
 
@@ -496,4 +488,4 @@ Sugestões práticas, não estado atual:
 - avisar explicitamente quando aparecer status Jira desconhecido;
 - adicionar rate limit no login;
 - medir custo do `expand=changelog`;
-- criar script de diagnóstico Jira para listar status e contagens da sprint ativa.
+- criar script de diagnóstico Jira para listar status e contagens do Kanban sem backlog.

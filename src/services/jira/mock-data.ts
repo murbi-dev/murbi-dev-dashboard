@@ -41,9 +41,9 @@ function issue(
 
 export function getMockDashboard(warning?: string): DashboardPayload {
   return {
-    sprint: {
-      id: "mock-active-sprint",
-      name: "Sprint ativa atual"
+    scope: {
+      id: "mock-kanban-board",
+      name: "Kanban contínuo"
     },
     source: "mock",
     warning,
@@ -78,7 +78,7 @@ export function getMockDashboard(warning?: string): DashboardPayload {
       issue(
         "MRB-409",
         "Normalizar eventos de saúde da conta",
-        "Pull Request",
+        "Pull request",
         "Task",
         2,
         { key: "MRB-102", name: "Saúde da conta" },
@@ -91,7 +91,7 @@ export function getMockDashboard(warning?: string): DashboardPayload {
       issue(
         "MRB-402",
         "Visibilidade de suporte para retentativas de nota",
-        "QA",
+        "Teste QA",
         "Story",
         undefined,
         { key: "MRB-103", name: "Suporte financeiro" },
@@ -104,7 +104,7 @@ export function getMockDashboard(warning?: string): DashboardPayload {
       issue(
         "MRB-398",
         "Melhorar sinal da fila de primeira resposta",
-        "To Do",
+        "Tarefas pendentes",
         "Task",
         3,
         undefined,
@@ -130,7 +130,7 @@ export function getMockDashboard(warning?: string): DashboardPayload {
       issue(
         "MRB-387",
         "Histórico de auditoria de renovação de conta",
-        "Done",
+        "Concluído",
         "Story",
         8,
         { key: "MRB-105", name: "Renovação" },
@@ -175,35 +175,30 @@ const mockSearchOnlyIssues: IssueSearchResult[] = [
     id: "MRB-182",
     key: "MRB-182",
     title: "Ajustar importador de clientes legados",
-    jiraStatus: "To Do",
+    jiraStatus: "Tarefas pendentes",
     assignee: { name: "Sem responsável" },
     isHotfix: false,
     updatedAt: days(14),
-    locationLabel: "Backlog / sem sprint",
     url: "https://murbi-team.atlassian.net/browse/MRB-182"
   },
   {
     id: "MRB-295",
     key: "MRB-295",
     title: "Revisar login de operadores internos",
-    jiraStatus: "Done",
+    jiraStatus: "Concluído",
     assignee: { name: "Larissa Nunes" },
     isHotfix: false,
     updatedAt: days(35),
-    sprint: { name: "Sprint 17", state: "closed" },
-    locationLabel: "Concluído · Sprint 17",
     url: "https://murbi-team.atlassian.net/browse/MRB-295"
   },
   {
     id: "MRB-430",
     key: "MRB-430",
-    title: "Fidelidade: preparar regras da próxima sprint",
-    jiraStatus: "To Do",
+    title: "Fidelidade: preparar regras da próxima entrega",
+    jiraStatus: "Tarefas pendentes",
     assignee: { name: "Marina Freitas" },
     isHotfix: false,
     updatedAt: days(4),
-    sprint: { name: "Sprint futura", state: "future" },
-    locationLabel: "Próxima sprint · Sprint futura",
     url: "https://murbi-team.atlassian.net/browse/MRB-430"
   }
 ];
@@ -217,19 +212,17 @@ function issueToSearchResult(issue: DashboardIssue): IssueSearchResult {
     assignee: issue.assignee,
     isHotfix: issue.isHotfix,
     updatedAt: issue.updatedAt,
-    sprint: { name: "Sprint ativa atual", state: "active" },
-    locationLabel: issue.businessStatus === "Done" ? "Concluído · Sprint ativa atual" : "Sprint atual · Sprint ativa atual",
     url: issue.url
   };
 }
 
 export function searchMockIssues(query: string, warning?: string): IssueSearchPayload {
   const normalizedQuery = query.trim().toLowerCase();
-  const currentSprintResults = getMockDashboard().issues.map(issueToSearchResult);
+  const currentFlowResults = getMockDashboard().issues.map(issueToSearchResult);
 
   return {
     query,
-    results: [...currentSprintResults, ...mockSearchOnlyIssues]
+    results: [...currentFlowResults, ...mockSearchOnlyIssues]
       .filter(
         (issue) =>
           issue.key.toLowerCase().includes(normalizedQuery) ||

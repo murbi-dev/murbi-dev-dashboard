@@ -1,9 +1,7 @@
 import { getJiraConfig } from "@/services/jira/config";
 import { JiraClient } from "@/services/jira/client";
-import { getCachedFieldMetadata } from "@/services/jira/metadata";
-import { mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
 import type { IssueSearchPayload, IssueSearchResult } from "@/types/issue-search";
-import type { JiraIssue, JiraSearchResponse, JiraSprint } from "./types";
+import type { JiraIssue, JiraSearchResponse } from "./types";
 import { searchMockIssues } from "./mock-data";
 
 const issueKeyPattern = /^[A-Z][A-Z0-9]+-\d+$/i;
@@ -24,54 +22,7 @@ function buildSearchJql(query: string): string {
   return `summary ~ "${escapedQuery}" ORDER BY updated DESC`;
 }
 
-function parseSprint(value: unknown): JiraSprint | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  if (Array.isArray(value)) {
-    return value
-      .filter((item): item is JiraSprint => typeof item === "object" && item !== null && "name" in item)
-      .sort((a, b) => {
-        const dateA = new Date(a.startDate ?? a.endDate ?? a.completeDate ?? 0).getTime();
-        const dateB = new Date(b.startDate ?? b.endDate ?? b.completeDate ?? 0).getTime();
-        return dateB - dateA;
-      })[0];
-  }
-
-  if (typeof value === "object" && "name" in value) {
-    return value as JiraSprint;
-  }
-
-  return undefined;
-}
-
-function getLocationLabel(issue: JiraIssue, sprint?: JiraSprint): string {
-  if (mapJiraStatusToBusinessStatus(issue.fields.status.name) === "Done") {
-    return sprint ? `Concluído · ${sprint.name}` : "Concluído";
-  }
-
-  if (!sprint) {
-    return "Backlog / sem sprint";
-  }
-
-  if (sprint.state === "active") {
-    return `Sprint atual · ${sprint.name}`;
-  }
-
-  if (sprint.state === "future") {
-    return `Próxima sprint · ${sprint.name}`;
-  }
-
-  return `Sprint encerrada · ${sprint.name}`;
-}
-
-function normalizeSearchIssue(
-  issue: JiraIssue,
-  baseUrl: string,
-  sprintFieldId?: string
-): IssueSearchResult {
-  const sprint = parseSprint(sprintFieldId ? issue.fields[sprintFieldId] : undefined);
+function normalizeSearchIssue(issue: JiraIssue, baseUrl: string): IssueSearchResult {
   const title = issue.fields.summary;
 
   return {
@@ -85,13 +36,6 @@ function normalizeSearchIssue(
     },
     isHotfix: title.includes("[HOTFIX]"),
     updatedAt: issue.fields.updated,
-    sprint: sprint
-      ? {
-          name: sprint.name,
-          state: sprint.state
-        }
-      : undefined,
-    locationLabel: getLocationLabel(issue, sprint),
     url: `${baseUrl}/browse/${issue.key}`
   };
 }
@@ -116,10 +60,7 @@ export async function searchIssues(query: string): Promise<IssueSearchPayload> {
 
   try {
     const client = new JiraClient(config);
-    const fieldMetadata = await getCachedFieldMetadata(client, config.boardId);
-    const fields = ["summary", "status", "assignee", "updated", fieldMetadata.sprintFieldId]
-      .filter(Boolean)
-      .join(",");
+    const fields = ["summary", "status", "assignee", "updated"].join(",");
     const jql = encodeURIComponent(buildSearchJql(normalizedQuery));
     const response = await client.get<JiraSearchResponse>(
       `/rest/api/3/search/jql?jql=${jql}&fields=${fields}&maxResults=${maxSearchResults}`
@@ -127,7 +68,7 @@ export async function searchIssues(query: string): Promise<IssueSearchPayload> {
 
     return {
       query: normalizedQuery,
-      results: response.issues.map((issue) => normalizeSearchIssue(issue, config.baseUrl, fieldMetadata.sprintFieldId)),
+      results: response.issues.map((issue) => normalizeSearchIssue(issue, config.baseUrl)),
       source: "jira",
       fetchedAt: new Date().toISOString()
     };

@@ -1,12 +1,12 @@
 # Murbi Dev Dashboard
 
-O Murbi Dev Dashboard é uma camada de visibilidade operacional em tempo real sobre a sprint do Jira. Ele foi criado para times de suporte, negócio, operações e gestão acompanharem o andamento da sprint atual sem expor toda a complexidade técnica do fluxo do Jira.
+O Murbi Dev Dashboard é uma camada de visibilidade operacional em tempo real sobre o Kanban do Jira. Ele foi criado para times de suporte, negócio, operações e gestão acompanharem o fluxo contínuo sem expor toda a complexidade técnica do Jira.
 
-O app não substitui o Jira. Ele mostra apenas cards da sprint ativa atual e traduz os status técnicos para colunas simples, orientadas ao negócio.
+O app não substitui o Jira. Ele mostra cards principais que não estão no backlog e traduz os status técnicos para colunas simples, orientadas ao negócio.
 
 ## Funcionalidades
 
-- Apenas sprint ativa atual
+- Kanban contínuo sem backlog
 - Atualização automática a cada 30 segundos
 - Tela de login sem banco de dados, com sessão em cookie assinado
 - Credenciais do Jira mantidas no servidor por trás de `/api/dashboard`
@@ -96,9 +96,9 @@ A integração fica em `src/services/jira`.
 
 Fluxo da API:
 
-1. Busca a sprint ativa em `GET /rest/agile/1.0/board/{boardId}/sprint?state=active`
-2. Busca os cards do board nessa sprint em `GET /rest/agile/1.0/board/{boardId}/issue`
-3. Usa JQL `Sprint = {sprintId} AND issuetype not in subTaskIssueTypes()` para refletir os cards principais exibidos no board
+1. Busca o board em `GET /rest/agile/1.0/board/{boardId}`
+2. Busca os cards principais do board em `GET /rest/agile/1.0/board/{boardId}/issue`
+3. Usa JQL `status != Backlog AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)` para refletir o Kanban sem backlog e limitar concluídos recentes
 4. Normaliza as respostas do Jira para tipos seguros do dashboard
 5. Mapeia os status do Jira para status de negócio
 
@@ -117,10 +117,10 @@ O mapeamento centralizado fica em `src/lib/status-mapper.ts`.
 | Status no painel | Status do Jira |
 | --- | --- |
 | Pendente | Tarefas pendentes |
-| Em desenvolvimento | In Progress, Em andamento, Pull request, Pronto para QA|
-| Validação | Teste QA |
-| Finalizando | Pronto para PROD |
-| Concluído | Concluído, Rejeitado |
+| Em Desenvolvimento | Em andamento, Pull request, Pronto para QA |
+| Em Teste | Teste QA |
+| Aguardando Deploy | Pronto para PROD |
+| Em Produção | Concluído, Concluido |
 
 ## Regra de HOTFIX
 

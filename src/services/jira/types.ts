@@ -7,6 +7,11 @@ export type JiraSprint = {
   completeDate?: string;
 };
 
+export type JiraBoard = {
+  id: number;
+  name: string;
+};
+
 export type JiraIssue = {
   id: string;
   key: string;

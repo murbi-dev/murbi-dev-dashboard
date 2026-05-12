@@ -13,7 +13,7 @@ export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
   "In Development": ["Em andamento", "Pull request", "Pronto para QA"],
   Validation: ["Teste QA"],
   Finalizing: ["Pronto para PROD"],
-  Done: ["Concluído", "Rejeitado"]
+  Done: ["Concluído"]
 };
 
 const normalizedStatusMapping = Object.entries(STATUS_MAPPING).reduce(
@@ -33,4 +33,8 @@ function normalizeStatusName(status: string): string {
 
 export function mapJiraStatusToBusinessStatus(status: string): BusinessStatus {
   return normalizedStatusMapping[normalizeStatusName(status)] ?? "Waiting";
+}
+
+export function isMappedJiraStatus(status: string): boolean {
+  return normalizedStatusMapping[normalizeStatusName(status)] !== undefined;
 }

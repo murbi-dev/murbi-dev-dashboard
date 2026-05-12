@@ -135,7 +135,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
               {isFetching ? <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
             </div>
             <p className={cn("mt-1 text-muted-foreground", mode === "tv" ? "text-lg" : "text-sm")}>
-              {data?.sprint.name} · atualizado {data ? formatRelativeTime(data.fetchedAt) : "agora"}
+              {data?.scope.name} · atualizado {data ? formatRelativeTime(data.fetchedAt) : "agora"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         ) : null}
 
         <section className={cn("grid gap-3", mode === "tv" ? "grid-cols-5" : "grid-cols-2 lg:grid-cols-5")}>
-          <SummaryCard icon={Activity} label="Cards da sprint" value={stats.total} mode={mode} />
+          <SummaryCard icon={Activity} label="Cards no fluxo" value={stats.total} mode={mode} />
           <SummaryCard icon={Flame} label="Hotfixes" value={`${stats.pendingHotfixes}/${stats.hotfixes}`} tone="hotfix" mode={mode} />
           <SummaryCard icon={Clock} label="Em Desenvolvimento" value={stats.development} mode={mode} />
           <SummaryCard icon={Search} label="Em Teste" value={stats.validation} mode={mode} />

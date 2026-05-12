@@ -8,13 +8,13 @@ export default function LoginPage() {
         <div className="grid w-full gap-8 lg:grid-cols-[1fr_420px] lg:items-center">
           <section className="hidden lg:block">
             <div className="mb-5 inline-flex rounded-md border bg-white px-3 py-1 text-sm font-medium text-muted-foreground shadow-sm">
-              Sprint em tempo real
+              Kanban em tempo real
             </div>
             <h1 className="max-w-2xl text-5xl font-semibold leading-tight tracking-normal text-foreground">
               Murbi Dev Dashboard
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-8 text-muted-foreground">
-              Acesso restrito ao acompanhamento operacional da sprint ativa.
+              Acesso restrito ao acompanhamento operacional do fluxo Kanban.
             </p>
           </section>
 

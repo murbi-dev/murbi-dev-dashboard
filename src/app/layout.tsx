@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Murbi Dev Dashboard",
-  description: "Painel operacional de acompanhamento da sprint da Murbi",
+  description: "Painel operacional de acompanhamento do Kanban da Murbi",
   icons: {
     icon: "/favicon.png",
     apple: "/logo.png"
