@@ -28,6 +28,14 @@ const defaultFilters: DashboardFilters = {
   priority: "all"
 };
 
+const defaultStatusFilters = BUSINESS_STATUSES.reduce(
+  (acc, status) => {
+    acc[status] = "all";
+    return acc;
+  },
+  {} as Record<BusinessStatus, string>
+);
+
 const priorityOrder: Record<string, number> = {
   Highest: 0,
   High: 1,
@@ -56,6 +64,7 @@ function sortIssues(issues: DashboardIssue[]) {
 export function DashboardShell({ mode }: { mode: DashboardMode }) {
   const { data, error, isLoading, isFetching, refetch } = useDashboard();
   const [filters, setFilters] = useState(defaultFilters);
+  const [statusFilters, setStatusFilters] = useState(defaultStatusFilters);
 
   const issues = data?.issues ?? emptyIssues;
   const assignees = useMemo(
@@ -87,7 +96,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
     );
   }, [filters, issues]);
 
-  const grouped = useMemo(
+  const groupedBeforeStatusFilter = useMemo(
     () =>
       BUSINESS_STATUSES.reduce(
         (acc, status) => {
@@ -97,6 +106,40 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         {} as Record<BusinessStatus, DashboardIssue[]>
       ),
     [filteredIssues]
+  );
+
+  const statusOptionsByColumn = useMemo(
+    () =>
+      BUSINESS_STATUSES.reduce(
+        (acc, status) => {
+          acc[status] = Array.from(
+            groupedBeforeStatusFilter[status].reduce((counts, issue) => {
+              counts.set(issue.jiraStatus, (counts.get(issue.jiraStatus) ?? 0) + 1);
+              return counts;
+            }, new Map<string, number>())
+          ).sort(([statusA], [statusB]) => statusA.localeCompare(statusB, "pt-BR"));
+
+          return acc;
+        },
+        {} as Record<BusinessStatus, Array<[string, number]>>
+      ),
+    [groupedBeforeStatusFilter]
+  );
+
+  const grouped = useMemo(
+    () =>
+      BUSINESS_STATUSES.reduce(
+        (acc, status) => {
+          const selectedJiraStatus = statusFilters[status];
+          acc[status] =
+            selectedJiraStatus === "all"
+              ? groupedBeforeStatusFilter[status]
+              : groupedBeforeStatusFilter[status].filter((issue) => issue.jiraStatus === selectedJiraStatus);
+          return acc;
+        },
+        {} as Record<BusinessStatus, DashboardIssue[]>
+      ),
+    [groupedBeforeStatusFilter, statusFilters]
   );
 
   const stats = {
@@ -231,7 +274,21 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           )}
         >
           {BUSINESS_STATUSES.map((status) => (
-            <StatusColumn key={status} status={status} issues={grouped[status]} mode={mode} />
+            <StatusColumn
+              key={status}
+              status={status}
+              issues={grouped[status]}
+              totalIssues={groupedBeforeStatusFilter[status].length}
+              jiraStatusOptions={statusOptionsByColumn[status]}
+              selectedJiraStatus={statusFilters[status]}
+              mode={mode}
+              onJiraStatusChange={(jiraStatus) =>
+                setStatusFilters((current) => ({
+                  ...current,
+                  [status]: jiraStatus
+                }))
+              }
+            />
           ))}
         </section>
       </div>

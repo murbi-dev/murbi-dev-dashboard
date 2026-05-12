@@ -205,7 +205,7 @@ Regras:
 - Ao investigar cards em coluna errada, agrupe `jiraStatus -> businessStatus` da `/api/dashboard`.
 - Labels visíveis ficam em `src/lib/display.ts`.
 - Cards mostram explicitamente o `jiraStatus` real, além da coluna de negócio.
-- A coluna `Em Desenvolvimento` agrupa múltiplos status técnicos e mostra no topo o total da coluna e a contagem por `jiraStatus`.
+- Colunas com múltiplos status técnicos mostram no topo o total da coluna e a contagem por `jiraStatus`; no modo standard, essa lista também filtra a própria coluna.
 
 ## 8. HOTFIX
 
@@ -301,6 +301,7 @@ Filtros atuais no modo standard:
 - HOTFIX only;
 - responsável;
 - prioridade.
+- status técnico por coluna, quando a coluna tiver mais de um `jiraStatus`.
 
 Modo TV:
 

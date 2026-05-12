@@ -16,18 +16,21 @@ const statusAccent: Record<BusinessStatus, string> = {
 export function StatusColumn({
   status,
   issues,
-  mode
+  totalIssues,
+  jiraStatusOptions,
+  selectedJiraStatus,
+  mode,
+  onJiraStatusChange
 }: {
   status: BusinessStatus;
   issues: DashboardIssue[];
+  totalIssues: number;
+  jiraStatusOptions: Array<[string, number]>;
+  selectedJiraStatus: string;
   mode: "standard" | "tv";
+  onJiraStatusChange: (jiraStatus: string) => void;
 }) {
-  const jiraStatusCounts = Array.from(
-    issues.reduce((acc, issue) => {
-      acc.set(issue.jiraStatus, (acc.get(issue.jiraStatus) ?? 0) + 1);
-      return acc;
-    }, new Map<string, number>())
-  ).sort(([statusA], [statusB]) => {
+  const jiraStatusCounts = [...jiraStatusOptions].sort(([statusA], [statusB]) => {
     const orderA = developmentStatusOrder.indexOf(statusA);
     const orderB = developmentStatusOrder.indexOf(statusB);
 
@@ -40,6 +43,8 @@ export function StatusColumn({
 
     return statusA.localeCompare(statusB, "pt-BR");
   });
+  const canFilterByJiraStatus = mode === "standard" && jiraStatusCounts.length > 1;
+  const hasStatusFilter = selectedJiraStatus !== "all";
 
   return (
     <div className="min-w-0 rounded-lg border bg-white shadow-sm">
@@ -52,18 +57,53 @@ export function StatusColumn({
             </h2>
           </div>
           <span className={cn("rounded-md bg-muted px-2 py-1 font-semibold", mode === "tv" ? "text-lg" : "text-xs")}>
-            {issues.length}
+            {hasStatusFilter ? `${issues.length}/${totalIssues}` : issues.length}
           </span>
         </div>
-        {status === "In Development" && jiraStatusCounts.length ? (
-          <dl className={cn("mt-3 grid gap-1 text-muted-foreground", mode === "tv" ? "text-sm" : "text-xs")}>
-            {jiraStatusCounts.map(([jiraStatus, count]) => (
-              <div key={jiraStatus} className="flex min-w-0 items-center justify-between gap-2">
-                <dt className="truncate">{jiraStatus}</dt>
-                <dd className="shrink-0 font-semibold text-foreground">{count}</dd>
-              </div>
-            ))}
-          </dl>
+        {jiraStatusCounts.length > 1 ? (
+          canFilterByJiraStatus ? (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                className={cn(
+                  "inline-flex h-7 max-w-full items-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors",
+                  selectedJiraStatus === "all"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                )}
+                onClick={() => onJiraStatusChange("all")}
+              >
+                Todos
+                <span className="font-semibold">{totalIssues}</span>
+              </button>
+              {jiraStatusCounts.map(([jiraStatus, count]) => (
+                <button
+                  type="button"
+                  key={jiraStatus}
+                  title={jiraStatus}
+                  className={cn(
+                    "inline-flex h-7 min-w-0 max-w-full items-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors",
+                    selectedJiraStatus === jiraStatus
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  )}
+                  onClick={() => onJiraStatusChange(jiraStatus)}
+                >
+                  <span className="truncate">{jiraStatus}</span>
+                  <span className="shrink-0 font-semibold">{count}</span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <dl className={cn("mt-3 grid gap-1 text-muted-foreground", mode === "tv" ? "text-sm" : "text-xs")}>
+              {jiraStatusCounts.map(([jiraStatus, count]) => (
+                <div key={jiraStatus} className="flex min-w-0 items-center justify-between gap-2">
+                  <dt className="truncate">{jiraStatus}</dt>
+                  <dd className="shrink-0 font-semibold text-foreground">{count}</dd>
+                </div>
+              ))}
+            </dl>
+          )
         ) : null}
       </div>
       <div className={cn("flex flex-col gap-3 p-3", mode === "tv" ? "max-h-[64vh] overflow-hidden" : "min-h-40")}>
