@@ -62,7 +62,9 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
       <Button variant="outline" size={mode === "tv" ? "default" : "sm"} onClick={() => setIsOpen(true)}>
         <Search className="h-4 w-4" />
         Buscar issue
-        <span className="rounded border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">Ctrl/Cmd K</span>
+        <span className="hidden rounded border bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground sm:inline-flex">
+          Ctrl/Cmd K
+        </span>
       </Button>
 
       {isOpen ? (

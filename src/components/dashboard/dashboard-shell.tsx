@@ -222,7 +222,14 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           </section>
         ) : null}
 
-        <section className={cn("grid gap-3", mode === "tv" ? "grid-cols-5" : "grid-cols-1 xl:grid-cols-5")}>
+        <section
+          className={cn(
+            "grid gap-3",
+            mode === "tv"
+              ? "grid-cols-5"
+              : "grid-flow-col auto-cols-[minmax(280px,82vw)] overflow-x-auto pb-2 xl:grid-flow-row xl:grid-cols-5 xl:overflow-visible xl:pb-0"
+          )}
+        >
           {BUSINESS_STATUSES.map((status) => (
             <StatusColumn key={status} status={status} issues={grouped[status]} mode={mode} />
           ))}
