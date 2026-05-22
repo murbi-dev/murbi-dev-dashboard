@@ -1,6 +1,6 @@
 import { getJiraDashboardFieldMetadata } from "@/services/jira/field-metadata";
 import { JiraClient } from "@/services/jira/client";
-import type { JiraBoardConfiguration, JiraField } from "./types";
+import type { JiraField } from "./types";
 
 export type CachedJiraFieldMetadata = ReturnType<typeof getJiraDashboardFieldMetadata>;
 
@@ -13,10 +13,9 @@ export function getCachedFieldMetadata(client: JiraClient, boardId: string): Pro
     return cached;
   }
 
-  const metadataPromise = Promise.all([
-    client.get<JiraBoardConfiguration>(`/rest/agile/1.0/board/${boardId}/configuration`),
-    client.get<JiraField[]>(`/rest/api/3/field`)
-  ]).then(([boardConfiguration, fields]) => getJiraDashboardFieldMetadata(fields, boardConfiguration));
+  const metadataPromise = client
+    .get<JiraField[]>(`/rest/api/3/field`)
+    .then((fields) => getJiraDashboardFieldMetadata(fields));
 
   fieldMetadataCache.set(boardId, metadataPromise);
 

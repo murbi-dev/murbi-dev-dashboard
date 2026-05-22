@@ -1,9 +1,10 @@
 import { mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
-import type { DashboardIssue, IssuePriority } from "@/types/dashboard";
+import type { DashboardIssue, IssueComplexity, IssuePriority } from "@/types/dashboard";
 import type { JiraDashboardFieldMetadata } from "./field-metadata";
 import type { JiraBoard, JiraIssue } from "./types";
 
 const validPriorities = new Set(["Highest", "High", "Medium", "Low", "Lowest"]);
+const validComplexities = new Set(["PP", "P", "M", "G", "GG"]);
 
 export type JiraEpicDetailsByKey = Record<string, { name?: string; color?: string }>;
 
@@ -24,14 +25,29 @@ function maxIsoDate(...dates: Array<string | undefined>): string {
     .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] as string;
 }
 
-function getNumberField(issue: JiraIssue, fieldId?: string): number | undefined {
+function getComplexityField(issue: JiraIssue, fieldId?: string): IssueComplexity | undefined {
   if (!fieldId) {
     return undefined;
   }
 
   const value = issue.fields[fieldId];
+  const rawValue =
+    typeof value === "string"
+      ? value
+      : value &&
+          typeof value === "object" &&
+          "value" in value &&
+          typeof value.value === "string"
+        ? value.value
+        : undefined;
 
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  if (!rawValue) {
+    return undefined;
+  }
+
+  const normalizedValue = rawValue.trim().toUpperCase();
+
+  return validComplexities.has(normalizedValue) ? (normalizedValue as IssueComplexity) : undefined;
 }
 
 function getStringField(issue: JiraIssue, fieldId?: string): string | undefined {
@@ -87,7 +103,7 @@ export function normalizeJiraIssue(
   const priority = issue.fields.priority?.name ?? "Unknown";
   const title = issue.fields.summary;
   const statusEntryDate = getLatestStatusEntryDate(issue, jiraStatus);
-  const storyPoints = getNumberField(issue, fieldMetadata.storyPointsFieldId);
+  const complexity = getComplexityField(issue, fieldMetadata.complexityFieldId);
   const epic = getEpic(issue, fieldMetadata, epicDetailsByKey);
 
   return {
@@ -98,7 +114,7 @@ export function normalizeJiraIssue(
       name: issue.fields.issuetype.name,
       iconUrl: issue.fields.issuetype.iconUrl
     },
-    storyPoints,
+    complexity,
     epic,
     assignee: {
       name: issue.fields.assignee?.displayName ?? "Sem responsável",

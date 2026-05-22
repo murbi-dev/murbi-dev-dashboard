@@ -146,7 +146,7 @@ status != Backlog AND issuetype not in subTaskIssueTypes() AND (statusCategory !
 
 3. Usar paginação (`startAt`, `maxResults=100`).
 4. Usar `expand=changelog` para calcular idade no status.
-5. Buscar configuração do board e metadados de campos para detectar campos reais de pontuação e épico.
+5. Buscar metadados de campos para detectar o campo real de complexidade e campos reais de épico.
 6. Normalizar em `src/services/jira/normalize.ts`.
 
 Não voltar para fluxo baseado em sprint ativa. O dashboard é Kanban contínuo e deve excluir backlog via JQL.
@@ -218,6 +218,8 @@ Regra atual:
 - indicador de resumo HOTFIX mostra `pendentes/total`;
 - HOTFIX pendente é `isHotfix` com `businessStatus !== "Done"`;
 - HOTFIX concluído é `isHotfix` na coluna final atual (`Done` / Em Produção).
+- HOTFIX pendente com complexidade mostra `Entrega prevista` em formato relativo (`daqui 2h` ou `1h atrasado`), calculada pela soma cumulativa dos HOTFIXes pendentes do mesmo responsável a partir de `statusChangedAt`.
+- A regra de tempo por complexidade fica isolada em `src/lib/hotfix-delivery.ts`: `PP=6h`, `P=12h`, `M=24h`, `G=48h`, `GG=72h`.
 
 Não tornar case-insensitive sem validar títulos reais do Jira.
 
@@ -228,7 +230,7 @@ O card mostra:
 - tempo no status atual;
 - data de criação da issue no Jira;
 - última atualização.
-- pontuação/story points quando o campo de estimativa do board existir e vier preenchido;
+- complexidade quando o campo Jira `Complexidade` (`customfield_10345`) vier preenchido com `PP`, `P`, `M`, `G` ou `GG`;
 - ícone real do tipo da issue vindo de `issuetype.iconUrl`, com tooltip usando `issuetype.name`;
 - épico quando vier via `parent` épico ou campos de épico detectados nos metadados do Jira, com cor quando o campo real `Issue color` estiver disponível.
 
@@ -236,9 +238,9 @@ Não mostra idade total desde criação.
 
 `createdAt` vem de `issue.fields.created`, é normalizado em `src/services/jira/normalize.ts` e aparece no footer do card como idade relativa pt-BR compacta (`Criado há 2 semanas`).
 
-Pontuação, tipo e épico:
+Complexidade, tipo e épico:
 
-- `storyPoints` vem do campo configurado em `/rest/agile/1.0/board/{boardId}/configuration`; se o board não expuser o campo ou a issue não tiver valor, o badge `SP: n` não aparece.
+- `complexity` vem do campo Jira `Complexidade` (`customfield_10345`), que retorna um objeto de seleção em cascata como `{ value: "M", id: "10165" }`; se o campo não existir, vier vazio ou retornar valor fora de `PP`, `P`, `M`, `G` e `GG`, o badge `Complexidade: valor` não aparece.
 - `issueType` vem de `fields.issuetype`; a UI renderiza somente o `iconUrl` real do Jira e usa `name` apenas no tooltip.
 - `epic` vem primeiro de `fields.parent` quando o parent é épico; para projetos clássicos, usa campos de épico detectados em `/rest/api/3/field`.
 - A cor do épico vem do campo real `Issue color` (`com.pyxis.greenhopper.jira:jsw-issue-color`) buscado nos épicos pais e é aplicada diretamente no marcador do badge; sem cor retornada, usa badge neutro.
@@ -292,7 +294,7 @@ Tela de métricas:
 - HOTFIX impacta contadores normalmente e aparece como contador pequeno por responsável;
 - usa barras empilhadas com as mesmas cores/status do dashboard;
 - ordena por maior quantidade de cards ativos e depois total, sem numeração de ranking;
-- SP aparece apenas como métrica secundária (`SP concluídos`, `SP ativos`) quando existir;
+- complexidade aparece apenas no card da issue, não como agregação individual;
 - não adicionar ranking, score, velocity complexa, SLA individual, DORA ou métricas de produtividade individual.
 
 Filtros atuais no modo standard:

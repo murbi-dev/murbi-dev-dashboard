@@ -19,8 +19,6 @@ type DeveloperMetrics = {
   avatarUrl?: string;
   total: number;
   hotfixes: number;
-  storyPointsDone: number;
-  storyPointsActive: number;
   byStatus: Record<BusinessStatus, number>;
 };
 
@@ -62,8 +60,6 @@ function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetrics[] {
         avatarUrl: issue.assignee.avatarUrl,
         total: 0,
         hotfixes: 0,
-        storyPointsDone: 0,
-        storyPointsActive: 0,
         byStatus: emptyStatusCounts()
       } satisfies DeveloperMetrics);
 
@@ -71,14 +67,6 @@ function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetrics[] {
     current.total += 1;
     current.hotfixes += issue.isHotfix ? 1 : 0;
     current.byStatus[issue.businessStatus] += 1;
-
-    if (issue.storyPoints) {
-      if (issue.businessStatus === "Done") {
-        current.storyPointsDone += issue.storyPoints;
-      } else {
-        current.storyPointsActive += issue.storyPoints;
-      }
-    }
 
     metrics.set(name, current);
   }
@@ -151,7 +139,6 @@ function StatusSegmentBar({ metrics }: { metrics: DeveloperMetrics }) {
 
 function DeveloperMetricCard({ metrics }: { metrics: DeveloperMetrics }) {
   const activeCards = metrics.total - metrics.byStatus.Done;
-  const hasStoryPoints = metrics.storyPointsDone > 0 || metrics.storyPointsActive > 0;
 
   return (
     <Card className="shadow-operational">
@@ -188,13 +175,6 @@ function DeveloperMetricCard({ metrics }: { metrics: DeveloperMetrics }) {
             </div>
           ))}
         </div>
-
-        {hasStoryPoints ? (
-          <div className="flex flex-wrap gap-2 border-t pt-3 text-xs text-muted-foreground">
-            <span>SP concluídos: {metrics.storyPointsDone}</span>
-            <span>SP ativos: {metrics.storyPointsActive}</span>
-          </div>
-        ) : null}
       </CardContent>
     </Card>
   );

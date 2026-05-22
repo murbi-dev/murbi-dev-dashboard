@@ -6,6 +6,7 @@ export type BusinessStatus =
   | "Done";
 
 export type IssuePriority = "Highest" | "High" | "Medium" | "Low" | "Lowest" | "Unknown";
+export type IssueComplexity = "PP" | "P" | "M" | "G" | "GG";
 
 export type DashboardIssue = {
   id: string;
@@ -15,7 +16,7 @@ export type DashboardIssue = {
     name: string;
     iconUrl?: string;
   };
-  storyPoints?: number;
+  complexity?: IssueComplexity;
   epic?: {
     key?: string;
     name?: string;

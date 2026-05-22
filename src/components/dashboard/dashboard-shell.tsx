@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import { BUSINESS_STATUSES } from "@/lib/status-mapper";
 import { formatRelativeTime } from "@/lib/time";
 import { getPriorityLabel } from "@/lib/display";
+import { buildHotfixDeliveryEstimateByIssueId } from "@/lib/hotfix-delivery";
 import { useDashboard } from "@/hooks/use-dashboard";
 import type { BusinessStatus, DashboardFilters, DashboardIssue } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
@@ -141,6 +142,10 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         {} as Record<BusinessStatus, DashboardIssue[]>
       ),
     [groupedBeforeStatusFilter, statusFilters]
+  );
+  const hotfixDeliveryEstimateByIssueId = useMemo(
+    () => buildHotfixDeliveryEstimateByIssueId(issues),
+    [issues]
   );
 
   const stats = {
@@ -284,6 +289,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
               jiraStatusOptions={statusOptionsByColumn[status]}
               selectedJiraStatus={statusFilters[status]}
               mode={mode}
+              hotfixDeliveryEstimateByIssueId={hotfixDeliveryEstimateByIssueId}
               onJiraStatusChange={(jiraStatus) =>
                 setStatusFilters((current) => ({
                   ...current,

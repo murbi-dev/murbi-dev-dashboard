@@ -69,17 +69,6 @@ export type JiraField = {
   };
 };
 
-export type JiraBoardConfiguration = {
-  estimation?: {
-    type?: string;
-    field?: {
-      fieldId?: string;
-      displayName?: string;
-    };
-  };
-};
-
-
 export type JiraSearchResponse = {
   startAt: number;
   maxResults: number;

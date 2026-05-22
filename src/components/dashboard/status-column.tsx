@@ -1,3 +1,4 @@
+import type { HotfixDeliveryEstimate } from "@/lib/hotfix-delivery";
 import type { BusinessStatus, DashboardIssue } from "@/types/dashboard";
 import { IssueCard } from "@/components/cards/issue-card";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ export function StatusColumn({
   jiraStatusOptions,
   selectedJiraStatus,
   mode,
+  hotfixDeliveryEstimateByIssueId,
   onJiraStatusChange
 }: {
   status: BusinessStatus;
@@ -28,6 +30,7 @@ export function StatusColumn({
   jiraStatusOptions: Array<[string, number]>;
   selectedJiraStatus: string;
   mode: "standard" | "tv";
+  hotfixDeliveryEstimateByIssueId: Map<string, HotfixDeliveryEstimate>;
   onJiraStatusChange: (jiraStatus: string) => void;
 }) {
   const jiraStatusCounts = [...jiraStatusOptions].sort(([statusA], [statusB]) => {
@@ -108,7 +111,14 @@ export function StatusColumn({
       </div>
       <div className={cn("flex flex-col gap-3 p-3", mode === "tv" ? "max-h-[64vh] overflow-hidden" : "min-h-40")}>
         {issues.length ? (
-          issues.map((issue) => <IssueCard key={issue.id} issue={issue} mode={mode} />)
+          issues.map((issue) => (
+            <IssueCard
+              key={issue.id}
+              issue={issue}
+              mode={mode}
+              hotfixDeliveryEstimate={hotfixDeliveryEstimateByIssueId.get(issue.id)}
+            />
+          ))
         ) : (
           <div
             className={cn(

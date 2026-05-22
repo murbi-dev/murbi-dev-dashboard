@@ -1,13 +1,14 @@
-import type { JiraBoardConfiguration, JiraField } from "./types";
+import type { JiraField } from "./types";
 
 export type JiraDashboardFieldMetadata = {
-  storyPointsFieldId?: string;
+  complexityFieldId?: string;
   epicLinkFieldId?: string;
   epicNameFieldId?: string;
   issueColorFieldId?: string;
   sprintFieldId?: string;
 };
 
+const complexityFieldNames = new Set(["complexidade"]);
 const epicLinkFieldNames = new Set(["epic link"]);
 const epicNameFieldNames = new Set(["epic name"]);
 const issueColorFieldNames = new Set(["issue color"]);
@@ -18,14 +19,13 @@ const issueColorFieldCustomTypes = new Set(["com.pyxis.greenhopper.jira:jsw-issu
 const sprintFieldCustomTypes = new Set(["com.pyxis.greenhopper.jira:gh-sprint"]);
 
 function normalizeFieldName(name: string): string {
-  return name.trim().toLowerCase();
+  return name.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-export function getJiraDashboardFieldMetadata(
-  fields: JiraField[],
-  boardConfiguration?: JiraBoardConfiguration
-): JiraDashboardFieldMetadata {
-  const storyPointsFieldId = boardConfiguration?.estimation?.field?.fieldId;
+export function getJiraDashboardFieldMetadata(fields: JiraField[]): JiraDashboardFieldMetadata {
+  const complexityFieldId = fields.find((field) =>
+    complexityFieldNames.has(normalizeFieldName(field.name))
+  )?.id;
 
   const epicLinkFieldId = fields.find(
     (field) =>
@@ -49,7 +49,7 @@ export function getJiraDashboardFieldMetadata(
   )?.id;
 
   return {
-    storyPointsFieldId,
+    complexityFieldId,
     epicLinkFieldId,
     epicNameFieldId,
     issueColorFieldId,

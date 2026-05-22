@@ -113,7 +113,7 @@ export async function getDashboardData(): Promise<DashboardPayload> {
     ]);
 
     const issueFields = buildJiraIssueFields([
-      fieldMetadata.storyPointsFieldId,
+      fieldMetadata.complexityFieldId,
       fieldMetadata.epicLinkFieldId,
       fieldMetadata.epicNameFieldId
     ]);
