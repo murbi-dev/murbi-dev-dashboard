@@ -19,6 +19,7 @@ export type JiraIssue = {
     summary: string;
     created: string;
     updated: string;
+    duedate?: string | null;
     status: {
       name: string;
     };

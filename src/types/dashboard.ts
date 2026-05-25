@@ -32,6 +32,7 @@ export type DashboardIssue = {
   isHotfix: boolean;
   createdAt: string;
   updatedAt: string;
+  dueDate?: string;
   statusChangedAt: string;
   url?: string;
 };

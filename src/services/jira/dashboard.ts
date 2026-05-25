@@ -17,6 +17,7 @@ const baseJiraIssueFields = [
   "parent",
   "created",
   "updated",
+  "duedate",
   "statuscategorychangedate"
 ];
 

@@ -218,8 +218,7 @@ Regra atual:
 - indicador de resumo HOTFIX mostra `pendentes/total`;
 - HOTFIX pendente é `isHotfix` com `businessStatus !== "Done"`;
 - HOTFIX concluído é `isHotfix` na coluna final atual (`Done` / Em Produção).
-- HOTFIX pendente com complexidade mostra `Entrega prevista` em formato relativo (`daqui 2h` ou `1h atrasado`), calculada pela soma cumulativa dos HOTFIXes pendentes do mesmo responsável a partir de `statusChangedAt`.
-- A regra de tempo por complexidade fica isolada em `src/lib/hotfix-delivery.ts`: `PP=6h`, `P=12h`, `M=24h`, `G=48h`, `GG=72h`.
+- HOTFIX não calcula mais previsão por complexidade nem fila por responsável.
 
 Não tornar case-insensitive sem validar títulos reais do Jira.
 
@@ -231,6 +230,7 @@ O card mostra:
 - data de criação da issue no Jira;
 - última atualização.
 - complexidade quando o campo Jira `Complexidade` (`customfield_10345`) vier preenchido com `PP`, `P`, `M`, `G` ou `GG`;
+- data limite quando o campo Jira `Data limite` (`duedate`) vier preenchido;
 - ícone real do tipo da issue vindo de `issuetype.iconUrl`, com tooltip usando `issuetype.name`;
 - épico quando vier via `parent` épico ou campos de épico detectados nos metadados do Jira, com cor quando o campo real `Issue color` estiver disponível.
 
@@ -241,6 +241,7 @@ Não mostra idade total desde criação.
 Complexidade, tipo e épico:
 
 - `complexity` vem do campo Jira `Complexidade` (`customfield_10345`), que retorna um objeto de seleção em cascata como `{ value: "M", id: "10165" }`; se o campo não existir, vier vazio ou retornar valor fora de `PP`, `P`, `M`, `G` e `GG`, o badge `Complexidade: valor` não aparece.
+- `dueDate` vem do campo Jira `Data limite` (`duedate`), que retorna uma data sem hora em formato `YYYY-MM-DD`; o card mostra `Data limite: DD/MM/AAAA`, fica amarelo quando vence hoje ou amanhã e vermelho quando a data já passou.
 - `issueType` vem de `fields.issuetype`; a UI renderiza somente o `iconUrl` real do Jira e usa `name` apenas no tooltip.
 - `epic` vem primeiro de `fields.parent` quando o parent é épico; para projetos clássicos, usa campos de épico detectados em `/rest/api/3/field`.
 - A cor do épico vem do campo real `Issue color` (`com.pyxis.greenhopper.jira:jsw-issue-color`) buscado nos épicos pais e é aplicada diretamente no marcador do badge; sem cor retornada, usa badge neutro.

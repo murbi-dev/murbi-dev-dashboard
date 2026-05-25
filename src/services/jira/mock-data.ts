@@ -5,6 +5,11 @@ import type { IssueSearchPayload, IssueSearchResult } from "@/types/issue-search
 const now = Date.now();
 const hours = (value: number) => new Date(now - value * 60 * 60 * 1000).toISOString();
 const days = (value: number) => new Date(now - value * 24 * 60 * 60 * 1000).toISOString();
+const dateDaysFromNow = (value: number) => {
+  const date = new Date(now + value * 24 * 60 * 60 * 1000);
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
 
 function issue(
   key: string,
@@ -17,7 +22,8 @@ function issue(
   priority: IssuePriority,
   createdAt: string,
   updatedAt: string,
-  statusChangedAt: string
+  statusChangedAt: string,
+  dueDate?: string
 ): DashboardIssue {
   return {
     id: key,
@@ -35,6 +41,7 @@ function issue(
     isHotfix: title.includes("[HOTFIX]"),
     createdAt,
     updatedAt,
+    dueDate,
     statusChangedAt
   };
 }
@@ -60,7 +67,8 @@ export function getMockDashboard(warning?: string): DashboardPayload {
         "Highest",
         days(3),
         hours(8),
-        hours(8)
+        hours(8),
+        dateDaysFromNow(1)
       ),
       issue(
         "MRB-417",
@@ -73,7 +81,8 @@ export function getMockDashboard(warning?: string): DashboardPayload {
         "High",
         days(5),
         hours(2),
-        hours(50)
+        hours(50),
+        dateDaysFromNow(-1)
       ),
       issue(
         "MRB-409",
@@ -151,7 +160,8 @@ export function getMockDashboard(warning?: string): DashboardPayload {
         "Highest",
         days(1),
         hours(1),
-        hours(1)
+        hours(1),
+        dateDaysFromNow(3)
       ),
       issue(
         "MRB-376",

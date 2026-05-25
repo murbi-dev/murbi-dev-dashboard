@@ -5,10 +5,7 @@ import {
   formatRelativeTime,
   formatStatusAge,
 } from '@/lib/time';
-import {
-  formatHotfixDeliveryEstimate,
-  type HotfixDeliveryEstimate,
-} from '@/lib/hotfix-delivery';
+import { formatDueDate, getDueDateTone } from '@/lib/due-date';
 import { getPriorityLabel } from '@/lib/display';
 import type { DashboardIssue } from '@/types/dashboard';
 import { Badge } from '@/components/ui/badge';
@@ -30,13 +27,12 @@ const priorityClass: Record<string, string> = {
 export function IssueCard({
   issue,
   mode,
-  hotfixDeliveryEstimate,
 }: {
   issue: DashboardIssue;
   mode: 'standard' | 'tv';
-  hotfixDeliveryEstimate?: HotfixDeliveryEstimate;
 }) {
   const staleLevel = getStaleLevel(issue);
+  const dueDateTone = issue.dueDate ? getDueDateTone(issue.dueDate) : undefined;
   const epicColorStyle = issue.epic?.color
     ? { backgroundColor: issue.epic.color }
     : undefined;
@@ -158,16 +154,22 @@ export function IssueCard({
           <Clock3 className="h-3.5 w-3.5" />
           {formatStatusAge(issue.jiraStatus, issue.statusChangedAt)}
         </span>
-        {hotfixDeliveryEstimate ? (
-          <span className="flex items-center gap-1 font-semibold text-red-700 dark:text-red-200">
-            <Clock3 className="h-3.5 w-3.5" />
-            Previsão: {formatHotfixDeliveryEstimate(hotfixDeliveryEstimate.dueAt)}
-          </span>
-        ) : null}
         <span>
           Criado há {formatRelativeAge(issue.createdAt)} · Atualizado{' '}
           {formatRelativeTime(issue.updatedAt)}
         </span>
+        {issue.dueDate ? (
+          <span
+            className={cn(
+              'flex items-center gap-1 font-semibold',
+              dueDateTone === 'overdue' && 'text-red-700 dark:text-red-200',
+              dueDateTone === 'soon' && 'text-amber-700 dark:text-yellow-200',
+            )}
+          >
+            <Clock3 className="h-3.5 w-3.5" />
+            Data limite: {formatDueDate(issue.dueDate)}
+          </span>
+        ) : null}
         {staleLevel !== 'none' ? (
           <span
             className={cn(

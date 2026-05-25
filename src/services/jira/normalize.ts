@@ -126,6 +126,7 @@ export function normalizeJiraIssue(
     isHotfix: title.includes("[HOTFIX]"),
     createdAt: issue.fields.created,
     updatedAt: issue.fields.updated,
+    dueDate: issue.fields.duedate ?? undefined,
     statusChangedAt: maxIsoDate(
       statusEntryDate,
       issue.fields.statuscategorychangedate,
