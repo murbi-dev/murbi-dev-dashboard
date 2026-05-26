@@ -1,4 +1,4 @@
-import { AlertTriangle, Clock3, Flame, UserCircle2 } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Clock3, Flame, UserCircle2 } from 'lucide-react';
 import { getStaleLevel } from '@/lib/alerts';
 import {
   formatRelativeAge,
@@ -22,6 +22,14 @@ const priorityClass: Record<string, string> = {
     'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
   Unknown:
     'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
+};
+
+const dueDateClass = {
+  default:
+    'border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200',
+  soon: 'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-800 dark:bg-amber-950/70 dark:text-amber-200',
+  overdue:
+    'border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/70 dark:text-red-200',
 };
 
 export function IssueCard({
@@ -159,16 +167,16 @@ export function IssueCard({
           {formatRelativeTime(issue.updatedAt)}
         </span>
         {issue.dueDate ? (
-          <span
+          <Badge
+            variant="outline"
             className={cn(
-              'flex items-center gap-1 font-semibold',
-              dueDateTone === 'overdue' && 'text-red-700 dark:text-red-200',
-              dueDateTone === 'soon' && 'text-amber-700 dark:text-yellow-200',
+              'mt-1 w-fit max-w-full gap-1.5 whitespace-normal px-2 py-1 text-left font-semibold leading-snug',
+              dueDateClass[dueDateTone ?? 'default'],
             )}
           >
-            <Clock3 className="h-3.5 w-3.5" />
+            <CalendarClock className="h-3.5 w-3.5 shrink-0" />
             Data limite: {formatDueDate(issue.dueDate)}
-          </span>
+          </Badge>
         ) : null}
         {staleLevel !== 'none' ? (
           <span

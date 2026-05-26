@@ -241,7 +241,7 @@ Não mostra idade total desde criação.
 Complexidade, tipo e épico:
 
 - `complexity` vem do campo Jira `Complexidade` (`customfield_10345`), que retorna um objeto de seleção em cascata como `{ value: "M", id: "10165" }`; se o campo não existir, vier vazio ou retornar valor fora de `PP`, `P`, `M`, `G` e `GG`, o badge `Complexidade: valor` não aparece.
-- `dueDate` vem do campo Jira `Data limite` (`duedate`), que retorna uma data sem hora em formato `YYYY-MM-DD`; o card mostra `Data limite: DD/MM/AAAA`, fica amarelo quando vence hoje ou amanhã e vermelho quando a data já passou.
+- `dueDate` vem do campo Jira `Data limite` (`duedate`), que retorna uma data sem hora em formato `YYYY-MM-DD`; o card mostra `Data limite: DD/MM/AAAA (distância relativa)`, como `hoje`, `amanhã`, `em 3 dias` ou `há 2 dias`, fica amarelo quando vence hoje ou amanhã e vermelho quando a data já passou.
 - `issueType` vem de `fields.issuetype`; a UI renderiza somente o `iconUrl` real do Jira e usa `name` apenas no tooltip.
 - `epic` vem primeiro de `fields.parent` quando o parent é épico; para projetos clássicos, usa campos de épico detectados em `/rest/api/3/field`.
 - A cor do épico vem do campo real `Issue color` (`com.pyxis.greenhopper.jira:jsw-issue-color`) buscado nos épicos pais e é aplicada diretamente no marcador do badge; sem cor retornada, usa badge neutro.

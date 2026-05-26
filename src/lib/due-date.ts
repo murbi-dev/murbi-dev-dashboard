@@ -41,9 +41,33 @@ export function formatDueDate(dueDate: string): string {
     return dueDate;
   }
 
-  return new Intl.DateTimeFormat("pt-BR", {
+  const formattedDate = new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric"
   }).format(due);
+
+  return `${formattedDate} (${formatDueDateDistance(due)})`;
+}
+
+function formatDueDateDistance(due: Date, now: Date = new Date()): string {
+  const diffDays = Math.round((due.getTime() - startOfDay(now).getTime()) / dayInMs);
+
+  if (diffDays === 0) {
+    return "hoje";
+  }
+
+  if (diffDays === 1) {
+    return "amanhã";
+  }
+
+  if (diffDays === -1) {
+    return "ontem";
+  }
+
+  if (diffDays > 1) {
+    return `em ${diffDays} dias`;
+  }
+
+  return `há ${Math.abs(diffDays)} dias`;
 }
