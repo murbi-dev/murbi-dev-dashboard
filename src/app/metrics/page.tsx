@@ -1,4 +1,4 @@
-import { DeveloperMetricsShell } from "@/components/metrics/developer-metrics-shell";
+import { DeveloperMetricsShell } from "./components/DeveloperMetricsShell";
 
 export default function MetricsPage() {
   return <DeveloperMetricsShell />;

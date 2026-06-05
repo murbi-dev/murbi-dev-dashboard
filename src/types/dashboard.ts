@@ -8,6 +8,12 @@ export type BusinessStatus =
 export type IssuePriority = "Highest" | "High" | "Medium" | "Low" | "Lowest" | "Unknown";
 export type IssueComplexity = "PP" | "P" | "M" | "G" | "GG";
 
+export type QaRejectionEvent = {
+  fromStatus: string;
+  toStatus: string;
+  changedAt: string;
+};
+
 export type DashboardIssue = {
   id: string;
   key: string;
@@ -30,6 +36,8 @@ export type DashboardIssue = {
   jiraStatus: string;
   businessStatus: BusinessStatus;
   isHotfix: boolean;
+  qaRejectionCount: number;
+  qaRejections: QaRejectionEvent[];
   createdAt: string;
   updatedAt: string;
   dueDate?: string;
@@ -45,9 +53,8 @@ export type DashboardScope = {
 export type DashboardPayload = {
   scope: DashboardScope;
   issues: DashboardIssue[];
-  source: "jira" | "mock";
+  source: "jira";
   fetchedAt: string;
-  warning?: string;
 };
 
 export type DashboardFilters = {

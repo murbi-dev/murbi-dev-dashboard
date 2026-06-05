@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { searchIssues } from "@/services/jira/issue-search";
+import { jiraIssueSearchService } from "@/services/jira/issue-search.service";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const query = searchParams.get("q") ?? "";
 
   try {
-    const payload = await searchIssues(query);
+    const payload = await jiraIssueSearchService.searchIssues(query);
 
     return NextResponse.json(payload, {
       headers: {

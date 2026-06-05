@@ -15,7 +15,6 @@ export type IssueSearchResult = {
 export type IssueSearchPayload = {
   query: string;
   results: IssueSearchResult[];
-  source: "jira" | "mock";
+  source: "jira";
   fetchedAt: string;
-  warning?: string;
 };

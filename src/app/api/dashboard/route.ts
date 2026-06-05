@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getDashboardData } from "@/services/jira/dashboard";
+import { jiraDashboardService } from "@/services/jira/dashboard.service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const payload = await getDashboardData();
+    const payload = await jiraDashboardService.getDashboardData();
 
     return NextResponse.json(payload, {
       headers: {
