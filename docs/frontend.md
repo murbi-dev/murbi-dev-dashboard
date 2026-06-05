@@ -42,6 +42,7 @@ Estado:
 - cards sem responsável ficam em `Sem responsável`;
 - mostra total, ativos, concluídos e distribuição por status técnico real do Jira, sem agrupar `Em andamento`, `Pull request` e `Pronto para QA` no mesmo contador;
 - HOTFIX impacta contadores normalmente e aparece como contador pequeno por responsável;
+- cards ativos que retornaram de QA aparecem como contador pequeno por responsável, usando `issue.qaRejectionCount > 0` e ignorando cards concluídos;
 - usa barras empilhadas por status técnico real do Jira;
 - ordena por maior quantidade de cards ativos e depois total, sem numeração de ranking;
 - complexidade aparece apenas no card da issue, não como agregação individual;

@@ -1,35 +1,16 @@
 "use client";
 
-import { ArrowLeft, BarChart3, CheckCircle2, Flame, RefreshCw, UserCircle2 } from "lucide-react";
+import { ArrowLeft, BarChart3, CheckCircle2, Flame, RefreshCw, RotateCcw, UserCircle2 } from "lucide-react";
 import Link from "next/link";
-import { STATUS_MAPPING } from "@/lib/status-mapper";
 import { formatRelativeTime } from "@/lib/time";
 import { useDashboard } from "@/hooks/use-dashboard";
-import type { DashboardIssue } from "@/types/dashboard";
+import { buildDeveloperMetrics, getOrderedJiraStatuses, type DeveloperMetrics } from "@/app/metrics/metrics";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
-
-type DeveloperMetrics = {
-  name: string;
-  avatarUrl?: string;
-  total: number;
-  active: number;
-  done: number;
-  hotfixes: number;
-  byJiraStatus: Record<string, number>;
-};
-
-const technicalStatusOrder = [
-  ...STATUS_MAPPING.Waiting,
-  ...STATUS_MAPPING["In Development"],
-  ...STATUS_MAPPING.Validation,
-  ...STATUS_MAPPING.Finalizing,
-  ...STATUS_MAPPING.Done
-];
 
 const jiraStatusColorClass: Record<string, { bar: string; text: string }> = {
   "Tarefas pendentes": {
@@ -69,56 +50,6 @@ const fallbackStatusColor = {
 
 function getStatusColor(status: string) {
   return jiraStatusColorClass[status] ?? fallbackStatusColor;
-}
-
-function getOrderedJiraStatuses(issues: DashboardIssue[]): string[] {
-  const statuses = new Set(issues.map((issue) => issue.jiraStatus));
-  const orderedStatuses = technicalStatusOrder.filter((status) => statuses.has(status));
-  const extraStatuses = Array.from(statuses)
-    .filter((status) => !technicalStatusOrder.includes(status))
-    .sort((a, b) => a.localeCompare(b, "pt-BR"));
-
-  return [...orderedStatuses, ...extraStatuses];
-}
-
-function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetrics[] {
-  const metrics = new Map<string, DeveloperMetrics>();
-
-  for (const issue of issues) {
-    const name = issue.assignee.name || "Sem responsável";
-    const current =
-      metrics.get(name) ??
-      ({
-        name,
-        avatarUrl: issue.assignee.avatarUrl,
-        total: 0,
-        active: 0,
-        done: 0,
-        hotfixes: 0,
-        byJiraStatus: {}
-      } satisfies DeveloperMetrics);
-
-    current.avatarUrl = current.avatarUrl ?? issue.assignee.avatarUrl;
-    current.total += 1;
-    current.active += issue.businessStatus === "Done" ? 0 : 1;
-    current.done += issue.businessStatus === "Done" ? 1 : 0;
-    current.hotfixes += issue.isHotfix ? 1 : 0;
-    current.byJiraStatus[issue.jiraStatus] = (current.byJiraStatus[issue.jiraStatus] ?? 0) + 1;
-
-    metrics.set(name, current);
-  }
-
-  return Array.from(metrics.values()).sort((a, b) => {
-    if (a.active !== b.active) {
-      return b.active - a.active;
-    }
-
-    if (a.total !== b.total) {
-      return b.total - a.total;
-    }
-
-    return a.name.localeCompare(b.name, "pt-BR");
-  });
 }
 
 function MetricsSkeleton() {
@@ -188,12 +119,20 @@ function DeveloperMetricCard({
             </p>
           </div>
         </div>
-        {metrics.hotfixes ? (
-          <Badge variant="hotfix" className="shrink-0">
-            <Flame className="mr-1 h-3 w-3" />
-            {metrics.hotfixes}
-          </Badge>
-        ) : null}
+        <div className="flex shrink-0 flex-wrap justify-end gap-2">
+          {metrics.hotfixes ? (
+            <Badge variant="hotfix">
+              <Flame className="mr-1 h-3 w-3" />
+              {metrics.hotfixes}
+            </Badge>
+          ) : null}
+          {metrics.qaRejections ? (
+            <Badge variant="warning" title="Cards ativos que retornaram de QA">
+              <RotateCcw className="mr-1 h-3 w-3" />
+              QA {metrics.qaRejections}
+            </Badge>
+          ) : null}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4 p-4 pt-0">
         <StatusSegmentBar metrics={metrics} jiraStatuses={jiraStatuses} />
