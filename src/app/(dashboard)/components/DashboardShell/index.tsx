@@ -1,12 +1,13 @@
 "use client";
 
-import { Activity, BarChart3, CheckCircle2, Clock, Flame, RefreshCw, Search } from "lucide-react";
+import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BUSINESS_STATUSES } from "@/lib/status-mapper";
 import { formatRelativeTime } from "@/lib/time";
 import { getPriorityLabel } from "@/lib/display";
+import { buildDashboardExportXls } from "@/lib/dashboard-export";
 import { useDashboard } from "@/hooks/use-dashboard";
 import type { BusinessStatus, DashboardFilters, DashboardIssue } from "@/types/dashboard";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
@@ -66,6 +67,8 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
   const { data, error, isLoading, isFetching, refetch } = useDashboard();
   const [filters, setFilters] = useState(defaultFilters);
   const [statusFilters, setStatusFilters] = useState(defaultStatusFilters);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
 
   const issues = data?.issues ?? emptyIssues;
   const assignees = useMemo(
@@ -142,6 +145,10 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
       ),
     [groupedBeforeStatusFilter, statusFilters]
   );
+  const visibleIssues = useMemo(
+    () => BUSINESS_STATUSES.flatMap((status) => grouped[status]),
+    [grouped]
+  );
   const stats = {
     total: issues.length,
     hotfixes: issues.filter((issue) => issue.isHotfix).length,
@@ -150,6 +157,34 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
     validation: issues.filter((issue) => issue.businessStatus === "Validation").length,
     done: issues.filter((issue) => issue.businessStatus === "Done").length
   };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!exportMenuRef.current?.contains(event.target as Node)) {
+        setIsExportMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function exportVisibleIssuesToExcel() {
+    const xls = buildDashboardExportXls(visibleIssues);
+    const blob = new Blob([xls], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const exportedAt = new Date().toISOString().slice(0, 10);
+
+    link.href = url;
+    link.download = `murbi-dashboard-${exportedAt}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setIsExportMenuOpen(false);
+  }
 
   if (isLoading) {
     return <DashboardSkeleton mode={mode} />;
@@ -256,6 +291,38 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
                 </option>
               ))}
             </select>
+            <div className="relative" ref={exportMenuRef}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full justify-between lg:w-auto"
+                aria-haspopup="menu"
+                aria-expanded={isExportMenuOpen}
+                onClick={() => setIsExportMenuOpen((current) => !current)}
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportar
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              {isExportMenuOpen ? (
+                <div
+                  className="absolute right-0 z-20 mt-1 w-56 rounded-md border bg-card p-1 text-card-foreground shadow-lg"
+                  role="menu"
+                >
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-sm px-2.5 py-2 text-left text-sm hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    role="menuitem"
+                    disabled={visibleIssues.length === 0}
+                    onClick={exportVisibleIssuesToExcel}
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Exportar para Excel
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </section>
         ) : null}
 

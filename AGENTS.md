@@ -58,7 +58,7 @@ Obrigatório:
 - sempre rodar `npm run test` junto de typecheck, lint e build antes de finalizar;
 - usar Conventional Commits em todo commit feito por IA;
 - atualizar `package.json` em toda mudança: patch para ajustes/fixes, minor para features e major para mudança incompatível/versão maior;
-- manter query do board sem backlog e sem subtarefas;
+- manter query do board sem backlog, épicos e subtarefas;
 - manter paginação;
 - manter dados simulados apenas como fixtures de teste;
 - preservar HOTFIX pinado;

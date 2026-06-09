@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Version Push"
+  short_description: "Commit, version, validate, and push Murbi Dev Dashboard changes"
+  default_prompt: "Use $commit-version-push to review the current Murbi Dev Dashboard diff, bump the version, validate, create a Conventional Commit, and push."

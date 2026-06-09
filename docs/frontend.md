@@ -10,6 +10,7 @@
 - `StatusColumn` renderiza coluna;
 - `IssueCard` renderiza card;
 - `SummaryCard` renderiza cards de resumo;
+- o submenu de exportação no modo standard baixa os cards visíveis como `.xls` compatível com Excel;
 - `DeveloperMetricsShell` reutiliza `/api/dashboard` e calcula distribuição por responsável client-side.
 
 Organização de componentes:
@@ -55,6 +56,7 @@ Estado:
 - responsável;
 - prioridade;
 - status técnico por coluna, quando a coluna tiver mais de um `jiraStatus`.
+- `Exportar para Excel` considera somente os cards visíveis após filtros gerais e filtros técnicos por coluna.
 
 ## Modo TV
 

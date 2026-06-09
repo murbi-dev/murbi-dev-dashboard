@@ -33,6 +33,8 @@ export type JiraIssue = {
     issuetype: {
       name: string;
       iconUrl?: string;
+      hierarchyLevel?: number;
+      subtask?: boolean;
     };
     priority?: {
       name: string;

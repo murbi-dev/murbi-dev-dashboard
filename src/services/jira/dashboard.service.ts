@@ -26,7 +26,7 @@ export class JiraDashboardService {
     "statuscategorychangedate"
   ];
   private static readonly maxResults = 100;
-  private static readonly boardJql = `status != Backlog AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)`;
+  private static readonly boardJql = `status != Backlog AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)`;
 
   constructor(
     private readonly configProvider: JiraConfigProvider = jiraConfigProvider,
@@ -54,8 +54,8 @@ export class JiraDashboardService {
         fieldMetadata.epicLinkFieldId,
         fieldMetadata.epicNameFieldId
       ]);
-      const issues = (await this.fetchAllBoardKanbanIssues(client, config.boardId, issueFields)).filter((issue) =>
-        isMappedJiraStatus(issue.fields.status.name)
+      const issues = (await this.fetchAllBoardKanbanIssues(client, config.boardId, issueFields)).filter(
+        (issue) => this.isDashboardIssue(issue) && isMappedJiraStatus(issue.fields.status.name)
       );
       const epicKeys = issues
         .map((issue) => this.getIssueEpicKey(issue, fieldMetadata))
@@ -108,6 +108,13 @@ export class JiraDashboardService {
     }
 
     return issues;
+  }
+
+  private isDashboardIssue(issue: JiraIssue): boolean {
+    const issueType = issue.fields.issuetype;
+    const normalizedIssueTypeName = issueType.name.trim().toLowerCase();
+
+    return normalizedIssueTypeName !== "epic" && issueType.hierarchyLevel !== 1 && issueType.subtask !== true;
   }
 
   private getIssueEpicKey(issue: JiraIssue, fieldMetadata: JiraDashboardFieldMetadata): string | undefined {

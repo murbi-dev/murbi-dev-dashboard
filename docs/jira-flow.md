@@ -37,7 +37,7 @@ Fluxo real:
 JQL obrigatório:
 
 ```text
-status != Backlog AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)
+status != Backlog AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)
 ```
 
 3. Usar paginação (`startAt`, `maxResults=100`).
@@ -97,7 +97,8 @@ Mapeamento atual:
 Regras:
 
 - Status desconhecido não entra no dashboard principal; isso evita exibir status não mapeado como coluna errada.
-- `Backlog` fica fora do dashboard por JQL.
+- `Backlog`, épicos e subtarefas ficam fora do dashboard por JQL.
+- `JiraDashboardService` também descarta épicos e subtarefas antes de normalizar, como defesa contra mudanças na configuração do board.
 - Ao investigar cards em coluna errada, agrupe `jiraStatus -> businessStatus` da `/api/dashboard`.
 - Labels visíveis ficam em `src/lib/display.ts`.
 - Cards mostram explicitamente o `jiraStatus` real, além da coluna de negócio.
