@@ -1,17 +1,11 @@
 import { mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
-import type { DashboardIssue, IssueComplexity, IssuePriority, QaRejectionEvent } from "@/types/dashboard";
+import { getQaRejectionEvents } from "@/lib/jira/jira-metrics.helper";
+import type { DashboardIssue, IssueComplexity, IssuePriority } from "@/types/dashboard";
 import type { JiraBoard, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraIssue } from "@/types/jira";
 
 export class JiraIssueNormalizerService {
   private static readonly validPriorities = new Set(["Highest", "High", "Medium", "Low", "Lowest"]);
   private static readonly validComplexities = new Set(["PP", "P", "M", "G", "GG"]);
-  private static readonly qaStatusName = "teste qa";
-  private static readonly qaRejectionTargetStatusNames = new Set([
-    "tarefas pendentes",
-    "em andamento",
-    "to do",
-    "in progress"
-  ]);
 
   normalizeIssue(
     issue: JiraIssue,
@@ -25,7 +19,7 @@ export class JiraIssueNormalizerService {
     const statusEntryDate = this.getLatestStatusEntryDate(issue, jiraStatus);
     const complexity = this.getComplexityField(issue, fieldMetadata.complexityFieldId);
     const epic = this.getEpic(issue, fieldMetadata, epicDetailsByKey);
-    const qaRejections = this.getQaRejections(issue);
+    const qaRejections = getQaRejectionEvents(issue);
 
     return {
       id: issue.id,
@@ -81,33 +75,6 @@ export class JiraIssueNormalizerService {
     return dates
       .filter((date): date is string => Boolean(date))
       .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] as string;
-  }
-
-  private normalizeStatusName(status: string): string {
-    return status.trim().toLowerCase();
-  }
-
-  private getQaRejections(issue: JiraIssue): QaRejectionEvent[] {
-    return (
-      issue.changelog?.histories
-        .flatMap((history) =>
-          history.items
-            .filter(
-              (item) =>
-                item.field.toLowerCase() === "status" &&
-                item.fromString &&
-                item.toString &&
-                this.normalizeStatusName(item.fromString) === JiraIssueNormalizerService.qaStatusName &&
-                JiraIssueNormalizerService.qaRejectionTargetStatusNames.has(this.normalizeStatusName(item.toString))
-            )
-            .map((item) => ({
-              fromStatus: item.fromString as string,
-              toStatus: item.toString as string,
-              changedAt: history.created
-            }))
-        )
-        .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()) ?? []
-    );
   }
 
   private getComplexityField(issue: JiraIssue, fieldId?: string): IssueComplexity | undefined {

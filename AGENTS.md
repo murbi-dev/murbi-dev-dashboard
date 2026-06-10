@@ -9,7 +9,9 @@ Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arq
 - Dashboard operacional sobre Jira para suporte, negócio, operações e gestão.
 - Não é substituto do Jira. Mostra uma visão simplificada do Kanban contínuo, sem backlog.
 - Foco: leitura rápida, modo TV, cards principais fora do backlog, HOTFIX, status de negócio e atualização automática.
-- Tela `/metrics` mostra distribuição operacional do fluxo por desenvolvedor, sem ranking ou score individual.
+- Tela `/metrics` possui abas `Overview` (resumo operacional em tempo real com cards de Cards Ativos, Concluídos, Responsáveis e HOTFIX), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate com filtro de período) e `Flow` (Lead Time e Aging com filtro de período).
+- Lógica de rejeição QA centralizada em `src/lib/jira/jira-metrics.helper.ts` — usada tanto pelo dashboard quanto pelas métricas de qualidade.
+- Lógica de fluxo (Lead Time, Aging) centralizada em `src/lib/jira/jira-flow.helper.ts` — usada pelo serviço de flow.
 - Interface visível deve ficar em **português do Brasil**.
 - Código, tipos, funções, arquivos e valores internos ficam em **inglês**.
 
@@ -50,6 +52,8 @@ Obrigatório:
 - manter código interno em inglês e UI em pt-BR;
 - manter Jira server-side;
 - manter `/api/dashboard` como contrato do frontend;
+- manter `/api/metrics/quality` como contrato da aba Quality;
+- manter `/api/metrics/flow` como contrato da aba Flow;
 - manter services como classes em arquivos `*.service.ts`;
 - manter clients externos em `src/clients`, não em `src/services`;
 - manter componentes específicos dentro de `src/app/**/components` e componentes genéricos em `src/components`;

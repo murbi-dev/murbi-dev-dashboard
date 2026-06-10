@@ -136,6 +136,8 @@ Não mostra idade total desde criação.
 
 `qaRejectionCount` conta transições do changelog em que o card saiu de `Teste QA` para fila de retrabalho (`Tarefas pendentes`, `Em andamento`, `To Do` ou `In Progress`). `qaRejections` guarda cada evento com origem, destino e data. O card exibe `Reprovações QA: N` apenas quando `N > 0`; ao clicar, abre um modal com o histórico de retornos.
 
+A lógica de detecção de rejeição QA está centralizada em `src/lib/jira/jira-metrics.helper.ts`. Esse helper é usado tanto pelo `JiraIssueNormalizerService` (dashboard) quanto pelo `JiraQualityService` (métricas), evitando duplicação de regras.
+
 `createdAt` vem de `issue.fields.created`, é normalizado em `src/services/jira/jira-issue-normalizer.service.ts` e aparece no footer do card como idade relativa pt-BR compacta (`Criado há 2 semanas`).
 
 Complexidade, tipo e épico:
@@ -156,3 +158,42 @@ Complexidade, tipo e épico:
 Motivo: o contador deve representar há quanto tempo o card está no status atual do fluxo Kanban, não idade total desde criação.
 
 Não remover `expand=changelog` sem substituir esse cálculo.
+
+## Qualidade (Quality Metrics)
+
+Endpoint: `GET /api/metrics/quality?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+
+Service: `src/services/jira/quality.service.ts` (`JiraQualityService`)
+
+Métrica principal: **Delivery Quality Rate**.
+
+### Fluxo
+
+```
+frontend -> /api/metrics/quality -> JiraQualityService -> Jira REST API (via JiraClient) -> shared helper -> resposta
+```
+
+### JQL
+
+Usa o board do Jira configurado para buscar tickets que entraram em `Concluído` no período:
+
+```text
+issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND status CHANGED TO Done AFTER "{start}" AND status CHANGED TO Done BEFORE "{end+1d}"
+```
+
+> Nota: O JQL usa o nome de sistema do status ("Done"), não o nome exibido na interface ("Concluído"). O nome de sistema do status "Concluído" pode variar entre instâncias Jira.
+
+### Cálculo
+
+- `totalDeliveries`: total de tickets entregues no período.
+- `deliveriesWithRework`: tickets entregues que possuem ao menos uma rejeição QA no changelog (via `src/lib/jira/jira-metrics.helper.ts`).
+- `qualityRate`: `((totalDeliveries - deliveriesWithRework) / totalDeliveries) * 100`.
+
+### Limitações
+
+- Tickets que foram concluídos e depois reabertos dentro do mesmo período não são contabilizados (o JQL exige `status = Concluído`).
+- O changelog pode ser truncado pelo Jira (>100 entradas), subestimando rejeições QA.
+
+### Extensibilidade
+
+Novas métricas de qualidade (Rework Rate, Defect Rate, Hotfix Rate etc.) devem ser adicionadas em `JiraQualityService` e expostas no mesmo payload ou em novos campos do payload existente.

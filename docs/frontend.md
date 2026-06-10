@@ -4,14 +4,19 @@
 
 - `/` usa `DashboardShell mode="standard"`;
 - `/tv` usa `DashboardShell mode="tv"`;
-- `/metrics` usa `DeveloperMetricsShell`;
+- `/metrics` usa `MetricsPageShell` com abas (cada aba independente);
+- `OverviewTab` reutiliza `/api/dashboard` e exibe cards de resumo operacional (Cards Ativos, Concluídos, Responsáveis, HOTFIX);
+- `DevsTab` reutiliza `/api/dashboard` e calcula distribuição por responsável client-side;
+- `QualityTab` usa `/api/metrics/quality` com filtro de período (data inicial e final);
+- `FlowTab` usa `/api/metrics/flow` com filtro de período (data inicial e final);
+- O helper de rejeição QA (`src/lib/jira/jira-metrics.helper.ts`) é compartilhado entre o normalizador do dashboard e o service de qualidade;
 - `DashboardShell` faz fetch, filtros, stats, agrupamento e layout;
 - `GlobalIssueSearch` renderiza command palette de busca global;
 - `StatusColumn` renderiza coluna;
 - `IssueCard` renderiza card;
 - `SummaryCard` renderiza cards de resumo;
 - o submenu de exportação no modo standard baixa os cards visíveis como `.xls` compatível com Excel;
-- `DeveloperMetricsShell` reutiliza `/api/dashboard` e calcula distribuição por responsável client-side.
+
 
 Organização de componentes:
 
@@ -38,7 +43,9 @@ Estado:
 ## Tela De Métricas
 
 - rota: `/metrics`;
-- considera apenas cards principais fora do backlog, vindos do mesmo payload do dashboard;
+- abas disponíveis: `Overview` (resumo operacional em tempo real), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate) e `Flow` (Lead Time e Aging);
+- `DevsTab` considera apenas cards principais fora do backlog, vindos do mesmo payload do dashboard;
+- `QualityTab` busca dados diretamente do Jira via `/api/metrics/quality`, respeitando filtro de período;
 - agrupa por `assignee.name`;
 - cards sem responsável ficam em `Sem responsável`;
 - mostra total, ativos, concluídos e distribuição por status técnico real do Jira, sem agrupar `Em andamento`, `Pull request` e `Pronto para QA` no mesmo contador;

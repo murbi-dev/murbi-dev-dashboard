@@ -36,8 +36,12 @@ __tests__                testes unitários colocalizados por escopo
 | `src/lib/auth.ts` | hash, cookie e assinatura da sessão |
 | `src/services/jira/dashboard.service.ts` | fluxo principal da integração Jira |
 | `src/services/jira/jira-issue-normalizer.service.ts` | Jira issue -> `DashboardIssue` |
+| `src/services/jira/quality.service.ts` | service de métricas de qualidade (Delivery Quality Rate) |
+| `src/lib/jira/jira-metrics.helper.ts` | helper compartilhado de rejeição QA |
+| `src/types/quality.ts` | tipos do payload de métricas de qualidade |
 | `src/clients/jira/jira.client.ts` | client HTTP do Jira |
 | `src/lib/status-mapper.ts` | status Jira -> status de negócio |
 | `src/lib/display.ts` | labels pt-BR para UI |
 | `src/app/(dashboard)/components/DashboardShell/index.tsx` | estado, filtros, agrupamento e layout do dashboard |
-| `src/app/metrics/components/DeveloperMetricsShell/index.tsx` | métricas do Kanban por responsável |
+| `src/app/metrics/components/MetricsPageShell/index.tsx` | shell com abas da página de métricas |
+| `src/app/metrics/components/DevsTab/index.tsx` | aba Devs — métricas do Kanban por responsável |

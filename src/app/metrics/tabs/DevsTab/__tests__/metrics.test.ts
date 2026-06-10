@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDeveloperMetrics } from "@/app/metrics/metrics";
+import { buildDeveloperMetrics } from "@/app/metrics/tabs/DevsTab/metrics";
 import type { BusinessStatus, DashboardIssue } from "@/types/dashboard";
 
 function issue(overrides: {
