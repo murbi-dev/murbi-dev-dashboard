@@ -8,12 +8,28 @@ export const BUSINESS_STATUSES: BusinessStatus[] = [
   "Done"
 ];
 
+/**
+ * Canonical Jira status display names. Use these constants instead of
+ * hardcoding the raw strings so the mapping stays in a single place.
+ */
+export const JIRA_STATUS = {
+  PENDING: "Tarefas pendentes",
+  IN_PROGRESS: "Em andamento",
+  PULL_REQUEST: "Pull request",
+  READY_FOR_QA: "Pronto para QA",
+  QA_TESTING: "Teste QA",
+  READY_FOR_PROD: "Pronto para PROD",
+  DONE: "Concluído"
+} as const;
+
+export type JiraStatus = (typeof JIRA_STATUS)[keyof typeof JIRA_STATUS];
+
 export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
-  Waiting: ["Tarefas pendentes"],
-  "In Development": ["Em andamento", "Pull request", "Pronto para QA"],
-  Validation: ["Teste QA"],
-  Finalizing: ["Pronto para PROD"],
-  Done: ["Concluído"]
+  Waiting: [JIRA_STATUS.PENDING],
+  "In Development": [JIRA_STATUS.IN_PROGRESS, JIRA_STATUS.PULL_REQUEST, JIRA_STATUS.READY_FOR_QA],
+  Validation: [JIRA_STATUS.QA_TESTING],
+  Finalizing: [JIRA_STATUS.READY_FOR_PROD],
+  Done: [JIRA_STATUS.DONE]
 };
 
 const normalizedStatusMapping = Object.entries(STATUS_MAPPING).reduce(

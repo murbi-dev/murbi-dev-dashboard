@@ -39,9 +39,9 @@ export function BottlenecksSection({
           detail={topStatus ? `${topStatus.count} ${topStatus.count === 1 ? "item" : "itens"}` : "Nenhum item"}
         />
         <BottleneckCard
-          label="Responsável com mais itens ativos"
+          label="Responsável com mais itens em desenvolvimento"
           value={topAssigneeByActive ? topAssigneeByActive.name : "—"}
-          detail={topAssigneeByActive ? `${topAssigneeByActive.count} ${topAssigneeByActive.count === 1 ? "item ativo" : "itens ativos"}` : "Nenhum item"}
+          detail={topAssigneeByActive ? `${topAssigneeByActive.count} ${topAssigneeByActive.count === 1 ? "item em desenvolvimento" : "itens em desenvolvimento"}` : "Nenhum item"}
         />
         <BottleneckCard
           label="Responsável com mais HOTFIX"

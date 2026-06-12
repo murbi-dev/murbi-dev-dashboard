@@ -1,4 +1,4 @@
-import { STATUS_MAPPING } from "@/lib/status-mapper";
+import { JIRA_STATUS, STATUS_MAPPING } from "@/lib/status-mapper";
 import type { DashboardIssue } from "@/types/dashboard";
 
 export type DeveloperMetrics = {
@@ -6,11 +6,14 @@ export type DeveloperMetrics = {
   avatarUrl?: string;
   total: number;
   active: number;
+  inDevelopment: number;
   done: number;
   hotfixes: number;
   qaRejections: number;
   byJiraStatus: Record<string, number>;
 };
+
+export const UNASSIGNED_NAME = "Sem responsável";
 
 const technicalStatusOrder = [
   ...STATUS_MAPPING.Waiting,
@@ -34,7 +37,7 @@ export function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetric
   const metrics = new Map<string, DeveloperMetrics>();
 
   for (const issue of issues) {
-    const name = issue.assignee.name || "Sem responsável";
+    const name = issue.assignee.name || UNASSIGNED_NAME;
     const current =
       metrics.get(name) ??
       ({
@@ -42,6 +45,7 @@ export function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetric
         avatarUrl: issue.assignee.avatarUrl,
         total: 0,
         active: 0,
+        inDevelopment: 0,
         done: 0,
         hotfixes: 0,
         qaRejections: 0,
@@ -53,6 +57,7 @@ export function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetric
     current.avatarUrl = current.avatarUrl ?? issue.assignee.avatarUrl;
     current.total += 1;
     current.active += isDone ? 0 : 1;
+    current.inDevelopment += issue.jiraStatus === JIRA_STATUS.IN_PROGRESS ? 1 : 0;
     current.done += isDone ? 1 : 0;
     current.hotfixes += issue.isHotfix ? 1 : 0;
     current.qaRejections += !isDone && issue.qaRejectionCount > 0 ? 1 : 0;

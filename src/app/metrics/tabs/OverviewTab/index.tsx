@@ -61,6 +61,9 @@ export function OverviewTab() {
 
   const assigneesByActive = [...developers].sort((a, b) => b.active - a.active);
   const topAssigneeByActive = assigneesByActive.length > 0 ? assigneesByActive[0] : null;
+  const topAssigneeByInDevelopment = [...developers]
+    .filter((d) => d.inDevelopment > 0)
+    .sort((a, b) => b.inDevelopment - a.inDevelopment)[0] ?? null;
   const topAssigneeByHotfix = [...developers]
     .filter((d) => d.hotfixes > 0)
     .sort((a, b) => b.hotfixes - a.hotfixes)[0] ?? null;
@@ -131,7 +134,7 @@ export function OverviewTab() {
 
       <BottlenecksSection
         topStatus={statusWithMostItems ? { status: statusWithMostItems.status, count: statusWithMostItems.count } : null}
-        topAssigneeByActive={topAssigneeByActive ? { name: topAssigneeByActive.name, count: topAssigneeByActive.active } : null}
+        topAssigneeByActive={topAssigneeByInDevelopment ? { name: topAssigneeByInDevelopment.name, count: topAssigneeByInDevelopment.inDevelopment } : null}
         topAssigneeByHotfix={topAssigneeByHotfix ? { name: topAssigneeByHotfix.name, count: topAssigneeByHotfix.hotfixes } : null}
       />
 
