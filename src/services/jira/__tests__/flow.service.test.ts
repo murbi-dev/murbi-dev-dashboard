@@ -151,6 +151,53 @@ describe("JiraFlowService", () => {
     );
   });
 
+  it("considers only HOTFIX issues when hotfixOnly is true", async () => {
+    const service = new JiraFlowService(
+      { getConfig: () => jiraConfig },
+      () =>
+        ({
+          get: async <T>(path: string): Promise<T> => {
+            if (decodeURIComponent(path).includes("status = Done")) {
+              return {
+                startAt: 0,
+                maxResults: 100,
+                total: 2,
+                isLast: true,
+                issues: [
+                  doneIssue("MUR-1", "2026-01-01T10:00:00.000Z", "2026-01-05T10:00:00.000Z", "Tarefa comum"),
+                  doneIssue(
+                    "MUR-2",
+                    "2026-01-02T10:00:00.000Z",
+                    "2026-01-06T10:00:00.000Z",
+                    "[HOTFIX] Correção urgente"
+                  )
+                ]
+              } as T;
+            }
+
+            return {
+              startAt: 0,
+              maxResults: 100,
+              total: 2,
+              isLast: true,
+              issues: [
+                activeIssue("MUR-3", "2026-06-01T10:00:00.000Z", "Em andamento", "Dev", "Ativa comum"),
+                activeIssue("MUR-4", "2026-06-05T10:00:00.000Z", "Em andamento", "Dev", "[HOTFIX] Ativa")
+              ]
+            } as T;
+          }
+        }) as unknown as JiraClient
+    );
+
+    const result = await service.getFlowMetrics("2026-06-01", "2026-06-30", true);
+
+    expect(result.leadTime).not.toBeNull();
+    expect(result.leadTime!.totalIssues).toBe(1);
+    expect(result.aging).not.toBeNull();
+    expect(result.aging!.totalActiveIssues).toBe(1);
+    expect(result.aging!.criticalIssues[0].key).toBe("MUR-4");
+  });
+
   it("returns null metrics when no issues match", async () => {
     const service = new JiraFlowService(
       { getConfig: () => jiraConfig },

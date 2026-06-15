@@ -214,6 +214,38 @@ describe("JiraQualityService", () => {
     expect(result.reworkDeliveries[2].rejectionCount).toBe(1);
   });
 
+  it("considers only HOTFIX deliveries when hotfixOnly is true", async () => {
+    const issues = [
+      makeIssue("MUR-1", { summary: "Tarefa comum" }),
+      makeIssue("MUR-2", { summary: "[HOTFIX] Correção urgente" }, qaRejectionHistory()),
+      makeIssue("MUR-3", { summary: "Outra tarefa comum" }),
+      makeIssue("MUR-4", { summary: "[HOTFIX] Outro fix" })
+    ];
+
+    const service = new JiraQualityService(
+      { getConfig: () => jiraConfig },
+      () =>
+        ({
+          get: async <T>(): Promise<T> => ({
+            startAt: 0,
+            maxResults: 100,
+            total: issues.length,
+            isLast: true,
+            issues
+          }) as T
+        }) as unknown as JiraClient
+    );
+
+    const result = await service.getQualityMetrics("2026-01-01", "2026-01-31", true);
+
+    expect(result.totalDeliveries).toBe(2);
+    expect(result.deliveriesWithRework).toBe(1);
+    expect(result.deliveriesWithoutRework).toBe(1);
+    expect(result.qualityRate).toBe(50);
+    expect(result.reworkDeliveries).toHaveLength(1);
+    expect(result.reworkDeliveries[0].key).toBe("MUR-2");
+  });
+
   it("handles missing assignee gracefully", async () => {
     const issues = [
       makeIssue("MUR-1", { assignee: undefined }, qaRejectionHistory())

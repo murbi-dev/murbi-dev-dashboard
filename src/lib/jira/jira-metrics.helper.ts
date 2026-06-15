@@ -43,6 +43,21 @@ function normalizeStatusName(status: string): string {
   return status.trim().toLowerCase();
 }
 
+/** Tag that marks an issue as a HOTFIX in its title/summary. */
+export const HOTFIX_TAG = "[HOTFIX]";
+
+/**
+ * Returns whether a Jira issue is a HOTFIX.
+ *
+ * A HOTFIX is identified by the `[HOTFIX]` tag in the issue summary (title).
+ *
+ * @param issue - A raw Jira issue.
+ * @returns `true` if the issue summary contains the HOTFIX tag.
+ */
+export function isHotfixIssue(issue: JiraIssue): boolean {
+  return issue.fields.summary.includes(HOTFIX_TAG);
+}
+
 /** Raw QA status name as it appears in Jira. */
 const qaStatusName = "teste qa";
 

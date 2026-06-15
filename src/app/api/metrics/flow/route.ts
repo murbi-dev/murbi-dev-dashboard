@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const hotfixOnly = searchParams.get("hotfixOnly") === "true";
 
     if (!startDate || !endDate) {
       return NextResponse.json(
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const payload = await jiraFlowService.getFlowMetrics(startDate, endDate);
+    const payload = await jiraFlowService.getFlowMetrics(startDate, endDate, hotfixOnly);
 
     return NextResponse.json(payload, {
       headers: {

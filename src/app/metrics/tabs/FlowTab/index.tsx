@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Flame } from "lucide-react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -28,17 +28,18 @@ export function FlowTab() {
 
   const [startDate, setStartDate] = useState(daysAgoISO(30));
   const [endDate, setEndDate] = useState(todayISO());
+  const [hotfixOnly, setHotfixOnly] = useState(false);
   const [data, setData] = useState<FlowMetricsPayload | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFlow = useCallback(async (start: string, end: string) => {
+  const fetchFlow = useCallback(async (start: string, end: string, onlyHotfix: boolean) => {
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await fetch(
-        `/api/metrics/flow?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}`,
+        `/api/metrics/flow?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}&hotfixOnly=${onlyHotfix}`,
         { cache: "no-store" }
       );
 
@@ -58,20 +59,33 @@ export function FlowTab() {
   useEffect(() => {
     const urlStart = searchParams.get("startDate");
     const urlEnd = searchParams.get("endDate");
+    const urlHotfix = searchParams.get("hotfixOnly") === "true";
     const s = urlStart ?? daysAgoISO(30);
     const e = urlEnd ?? todayISO();
     setStartDate(s);
     setEndDate(e);
-    fetchFlow(s, e);
+    setHotfixOnly(urlHotfix);
+    fetchFlow(s, e, urlHotfix);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleApply() {
+  function applyFilters(onlyHotfix: boolean) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("startDate", startDate);
     params.set("endDate", endDate);
+    params.set("hotfixOnly", String(onlyHotfix));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-    fetchFlow(startDate, endDate);
+    fetchFlow(startDate, endDate, onlyHotfix);
+  }
+
+  function handleApply() {
+    applyFilters(hotfixOnly);
+  }
+
+  function handleToggleHotfix() {
+    const next = !hotfixOnly;
+    setHotfixOnly(next);
+    applyFilters(next);
   }
 
   return (
@@ -103,6 +117,15 @@ export function FlowTab() {
         </div>
         <Button variant="default" size="sm" onClick={handleApply} disabled={isLoading}>
           Aplicar
+        </Button>
+        <Button
+          variant={hotfixOnly ? "default" : "outline"}
+          size="sm"
+          onClick={handleToggleHotfix}
+          disabled={isLoading}
+        >
+          <Flame className="h-4 w-4" />
+          Apenas HOTFIX
         </Button>
       </section>
 

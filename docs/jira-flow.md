@@ -109,6 +109,7 @@ Regras:
 Regra atual:
 
 - título contendo exatamente `[HOTFIX]` vira `isHotfix = true`;
+- a mesma regra de título é compartilhada pelas métricas Quality e Flow quando `hotfixOnly=true`;
 - HOTFIX fica pinado no topo da coluna;
 - recebe badge e estilo vermelho;
 - texto `[HOTFIX]` é removido só da exibição do título.
@@ -161,7 +162,7 @@ Não remover `expand=changelog` sem substituir esse cálculo.
 
 ## Qualidade (Quality Metrics)
 
-Endpoint: `GET /api/metrics/quality?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+Endpoint: `GET /api/metrics/quality?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&hotfixOnly=true`
 
 Service: `src/services/jira/quality.service.ts` (`JiraQualityService`)
 
@@ -188,6 +189,7 @@ issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND
 - `totalDeliveries`: total de tickets entregues no período.
 - `deliveriesWithRework`: tickets entregues que possuem ao menos uma rejeição QA no changelog (via `src/lib/jira/jira-metrics.helper.ts`).
 - `qualityRate`: `((totalDeliveries - deliveriesWithRework) / totalDeliveries) * 100`.
+- `hotfixOnly=true`: filtra as entregas consideradas para issues cujo título contém `[HOTFIX]`.
 
 ### Limitações
 
@@ -197,3 +199,28 @@ issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND
 ### Extensibilidade
 
 Novas métricas de qualidade (Rework Rate, Defect Rate, Hotfix Rate etc.) devem ser adicionadas em `JiraQualityService` e expostas no mesmo payload ou em novos campos do payload existente.
+
+## Fluxo (Flow Metrics)
+
+Endpoint: `GET /api/metrics/flow?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&hotfixOnly=true`
+
+Service: `src/services/jira/flow.service.ts` (`JiraFlowService`)
+
+Métricas principais: **Lead Time** e **Aging**.
+
+### Fluxo
+
+```
+frontend -> /api/metrics/flow -> JiraFlowService -> Jira REST API (via JiraClient) -> helper de fluxo -> resposta
+```
+
+### Cálculo
+
+- Lead Time considera tickets concluídos no período.
+- Aging considera tickets ativos no período.
+- `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues cujo título contém `[HOTFIX]`.
+
+### Limitações
+
+- O filtro HOTFIX segue a mesma regra case-sensitive do dashboard.
+- O cálculo depende do changelog para identificar entrada em andamento e idade dos cards ativos.

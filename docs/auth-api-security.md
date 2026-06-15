@@ -38,6 +38,8 @@ Regras importantes:
 | --- | --- | --- |
 | `/api/dashboard` | GET | payload do dashboard |
 | `/api/issues/search` | GET | busca global de issues |
+| `/api/metrics/quality` | GET | métricas de qualidade por período, com `hotfixOnly=true` opcional |
+| `/api/metrics/flow` | GET | métricas de fluxo por período, com `hotfixOnly=true` opcional |
 | `/api/auth/login` | POST | login e cookie |
 | `/api/auth/logout` | POST | remove cookie |
 

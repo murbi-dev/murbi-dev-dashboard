@@ -51,6 +51,7 @@ import {
   getFirstInProgressDate,
   calculatePercentile
 } from "@/lib/jira/jira-flow.helper";
+import { isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
 import type { FlowMetricsPayload, AgingIssue } from "@/types/flow";
 import type { JiraConfig, JiraSearchResponse } from "@/types/jira";
 
@@ -68,9 +69,14 @@ export class JiraFlowService {
    *
    * @param startDate - ISO date string (YYYY-MM-DD) for the range start.
    * @param endDate - ISO date string (YYYY-MM-DD) for the range end.
+   * @param hotfixOnly - When `true`, only HOTFIX issues are considered.
    * @returns Flow metrics payload.
    */
-  async getFlowMetrics(startDate: string, endDate: string): Promise<FlowMetricsPayload> {
+  async getFlowMetrics(
+    startDate: string,
+    endDate: string,
+    hotfixOnly = false
+  ): Promise<FlowMetricsPayload> {
     const config = this.configProvider.getConfig();
 
     if (!config) {
@@ -80,10 +86,13 @@ export class JiraFlowService {
     try {
       const client = this.clientFactory(config);
 
-      const [doneIssues, activeIssues] = await Promise.all([
+      const [fetchedDoneIssues, fetchedActiveIssues] = await Promise.all([
         this.fetchDoneIssues(client, config.boardId, startDate, endDate),
         this.fetchActiveIssues(client, config.boardId)
       ]);
+
+      const doneIssues = hotfixOnly ? fetchedDoneIssues.filter(isHotfixIssue) : fetchedDoneIssues;
+      const activeIssues = hotfixOnly ? fetchedActiveIssues.filter(isHotfixIssue) : fetchedActiveIssues;
 
       const leadTime = this.computeLeadTime(doneIssues);
       const aging = this.computeAging(computeActiveIssuesInPeriod(activeIssues, startDate, endDate));

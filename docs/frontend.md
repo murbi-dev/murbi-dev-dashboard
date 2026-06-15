@@ -7,8 +7,8 @@
 - `/metrics` usa `MetricsPageShell` com abas (cada aba independente);
 - `OverviewTab` reutiliza `/api/dashboard` e exibe cards de resumo operacional (Cards Ativos, Concluídos, Responsáveis, HOTFIX);
 - `DevsTab` reutiliza `/api/dashboard` e calcula distribuição por responsável client-side;
-- `QualityTab` usa `/api/metrics/quality` com filtro de período (data inicial e final);
-- `FlowTab` usa `/api/metrics/flow` com filtro de período (data inicial e final);
+- `QualityTab` usa `/api/metrics/quality` com filtro de período (data inicial e final) e opção `Apenas HOTFIX`;
+- `FlowTab` usa `/api/metrics/flow` com filtro de período (data inicial e final) e opção `Apenas HOTFIX`;
 - O helper de rejeição QA (`src/lib/jira/jira-metrics.helper.ts`) é compartilhado entre o normalizador do dashboard e o service de qualidade;
 - `DashboardShell` faz fetch, filtros, stats, agrupamento e layout;
 - `GlobalIssueSearch` renderiza command palette de busca global;
@@ -45,7 +45,8 @@ Estado:
 - rota: `/metrics`;
 - abas disponíveis: `Overview` (resumo operacional em tempo real), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate) e `Flow` (Lead Time e Aging);
 - `DevsTab` considera apenas cards principais fora do backlog, vindos do mesmo payload do dashboard;
-- `QualityTab` busca dados diretamente do Jira via `/api/metrics/quality`, respeitando filtro de período;
+- `QualityTab` busca dados diretamente do Jira via `/api/metrics/quality`, respeitando filtro de período e `hotfixOnly`;
+- `FlowTab` busca dados diretamente do Jira via `/api/metrics/flow`, respeitando filtro de período e `hotfixOnly`;
 - agrupa por `assignee.name`;
 - cards sem responsável ficam em `Sem responsável`;
 - mostra total, ativos, concluídos e distribuição por status técnico real do Jira, sem agrupar `Em andamento`, `Pull request` e `Pronto para QA` no mesmo contador;

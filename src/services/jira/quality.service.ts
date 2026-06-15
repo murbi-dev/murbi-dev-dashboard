@@ -48,7 +48,7 @@
 
 import { jiraConfigProvider, JiraConfigProvider } from "@/lib/jira/jira-config.provider";
 import { JiraClient } from "@/clients/jira/jira.client";
-import { getQaRejectionCount } from "@/lib/jira/jira-metrics.helper";
+import { getQaRejectionCount, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
 import type { QualityMetricsPayload, QualityReworkDelivery } from "@/types/quality";
 import type { JiraConfig, JiraSearchResponse } from "@/types/jira";
 
@@ -66,9 +66,14 @@ export class JiraQualityService {
    *
    * @param startDate - ISO date string (YYYY-MM-DD) for the range start.
    * @param endDate - ISO date string (YYYY-MM-DD) for the range end.
+   * @param hotfixOnly - When `true`, only HOTFIX deliveries are considered.
    * @returns Quality metrics payload.
    */
-  async getQualityMetrics(startDate: string, endDate: string): Promise<QualityMetricsPayload> {
+  async getQualityMetrics(
+    startDate: string,
+    endDate: string,
+    hotfixOnly = false
+  ): Promise<QualityMetricsPayload> {
     const config = this.configProvider.getConfig();
 
     if (!config) {
@@ -77,7 +82,8 @@ export class JiraQualityService {
 
     try {
       const client = this.clientFactory(config);
-      const issues = await this.fetchDeliveredIssues(client, config.boardId, startDate, endDate);
+      const fetchedIssues = await this.fetchDeliveredIssues(client, config.boardId, startDate, endDate);
+      const issues = hotfixOnly ? fetchedIssues.filter(isHotfixIssue) : fetchedIssues;
 
       let totalDeliveries = 0;
       let deliveriesWithRework = 0;
