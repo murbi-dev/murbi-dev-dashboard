@@ -108,11 +108,11 @@ Regras:
 
 Regra atual:
 
-- título contendo exatamente `[HOTFIX]` vira `isHotfix = true`;
-- a mesma regra de título é compartilhada pelas métricas Quality e Flow quando `hotfixOnly=true`;
+- prioridade Jira `HOTFIX` vira `isHotfix = true` (`isHotfixIssue` em `src/lib/jira/jira-metrics.helper.ts`);
+- a mesma regra de prioridade é compartilhada pelas métricas Quality e Flow quando `hotfixOnly=true`;
+- toda chamada ao Jira que precisa dessa regra deve pedir o campo `priority`;
 - HOTFIX fica pinado no topo da coluna;
-- recebe badge e estilo vermelho;
-- texto `[HOTFIX]` é removido só da exibição do título.
+- recebe badge e estilo vermelho, no lugar do badge de prioridade;
 - indicador de resumo HOTFIX mostra `pendentes/total`;
 - HOTFIX pendente é `isHotfix` com `businessStatus !== "Done"`;
 - HOTFIX concluído é `isHotfix` na coluna final atual (`Done` / Em Produção).
@@ -189,7 +189,7 @@ issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND
 - `totalDeliveries`: total de tickets entregues no período.
 - `deliveriesWithRework`: tickets entregues que possuem ao menos uma rejeição QA no changelog (via `src/lib/jira/jira-metrics.helper.ts`).
 - `qualityRate`: `((totalDeliveries - deliveriesWithRework) / totalDeliveries) * 100`.
-- `hotfixOnly=true`: filtra as entregas consideradas para issues cujo título contém `[HOTFIX]`.
+- `hotfixOnly=true`: filtra as entregas consideradas para issues com prioridade `HOTFIX`.
 
 ### Limitações
 
@@ -218,9 +218,9 @@ frontend -> /api/metrics/flow -> JiraFlowService -> Jira REST API (via JiraClien
 
 - Lead Time considera tickets concluídos no período.
 - Aging considera tickets ativos no período.
-- `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues cujo título contém `[HOTFIX]`.
+- `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues com prioridade `HOTFIX`.
 
 ### Limitações
 
-- O filtro HOTFIX segue a mesma regra case-sensitive do dashboard.
+- O filtro HOTFIX segue a mesma regra de prioridade do dashboard.
 - O cálculo depende do changelog para identificar entrada em andamento e idade dos cards ativos.

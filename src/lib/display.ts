@@ -9,6 +9,7 @@ export const businessStatusLabels: Record<BusinessStatus, string> = {
 };
 
 export const priorityLabels: Record<IssuePriority, string> = {
+  HOTFIX: "Hotfix",
   Highest: "Crítica",
   High: "Alta",
   Medium: "Média",

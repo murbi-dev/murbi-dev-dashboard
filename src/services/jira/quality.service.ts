@@ -54,7 +54,7 @@ import type { JiraConfig, JiraSearchResponse } from "@/types/jira";
 
 export class JiraQualityService {
   private static readonly maxResults = 100;
-  private static readonly baseFields = ["summary", "status", "issuetype", "updated", "assignee"].join(",");
+  private static readonly baseFields = ["summary", "status", "issuetype", "priority", "updated", "assignee"].join(",");
 
   constructor(
     private readonly configProvider: JiraConfigProvider = jiraConfigProvider,

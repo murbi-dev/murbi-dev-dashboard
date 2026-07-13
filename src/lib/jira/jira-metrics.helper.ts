@@ -43,19 +43,30 @@ function normalizeStatusName(status: string): string {
   return status.trim().toLowerCase();
 }
 
-/** Tag that marks an issue as a HOTFIX in its title/summary. */
-export const HOTFIX_TAG = "[HOTFIX]";
+/** Name of the Jira priority that marks an issue as a HOTFIX. */
+export const HOTFIX_PRIORITY_NAME = "HOTFIX";
 
 /**
  * Returns whether a Jira issue is a HOTFIX.
  *
- * A HOTFIX is identified by the `[HOTFIX]` tag in the issue summary (title).
+ * A HOTFIX is identified by the `HOTFIX` priority. Requires the `priority`
+ * field to be present in the Jira API call.
  *
  * @param issue - A raw Jira issue.
- * @returns `true` if the issue summary contains the HOTFIX tag.
+ * @returns `true` if the issue priority is HOTFIX.
  */
 export function isHotfixIssue(issue: JiraIssue): boolean {
-  return issue.fields.summary.includes(HOTFIX_TAG);
+  return isHotfixPriority(issue.fields.priority?.name);
+}
+
+/**
+ * Returns whether a priority name corresponds to the HOTFIX priority.
+ *
+ * @param priority - A Jira priority name.
+ * @returns `true` if the priority is HOTFIX.
+ */
+export function isHotfixPriority(priority: string | undefined): boolean {
+  return priority?.trim().toUpperCase() === HOTFIX_PRIORITY_NAME;
 }
 
 /** Raw QA status name as it appears in Jira. */

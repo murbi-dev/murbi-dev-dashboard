@@ -134,7 +134,7 @@ export function GlobalIssueSearch({ mode }: { mode: "standard" | "tv" }) {
                           ) : null}
                         </div>
                         <div className="mt-1 line-clamp-2 text-sm font-medium text-foreground">
-                          {issue.title.replace("[HOTFIX]", "").trim()}
+                          {issue.title}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                           <span>{issue.assignee.name}</span>

@@ -5,7 +5,7 @@ export function jiraIssueFixture(overrides: Partial<JiraIssue> = {}): JiraIssue 
     id: "10001",
     key: "MURBI-571",
     fields: {
-      summary: "[HOTFIX] Relatório de auditoria de alocações",
+      summary: "Relatório de auditoria de alocações",
       created: "2026-05-04T16:10:09.016-0300",
       updated: "2026-06-02T17:18:18.489-0300",
       duedate: "2026-06-10",
@@ -17,7 +17,7 @@ export function jiraIssueFixture(overrides: Partial<JiraIssue> = {}): JiraIssue 
         iconUrl: "https://example.com/story.svg"
       },
       priority: {
-        name: "High"
+        name: "HOTFIX"
       },
       assignee: {
         displayName: "Henrique Mayrlon da Silva Lourenço",

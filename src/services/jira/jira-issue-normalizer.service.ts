@@ -1,10 +1,10 @@
 import { mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
-import { getQaRejectionEvents } from "@/lib/jira/jira-metrics.helper";
+import { getQaRejectionEvents, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
 import type { DashboardIssue, IssueComplexity, IssuePriority } from "@/types/dashboard";
 import type { JiraBoard, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraIssue } from "@/types/jira";
 
 export class JiraIssueNormalizerService {
-  private static readonly validPriorities = new Set(["Highest", "High", "Medium", "Low", "Lowest"]);
+  private static readonly validPriorities = new Set(["HOTFIX", "Highest", "High", "Medium", "Low", "Lowest"]);
   private static readonly validComplexities = new Set(["PP", "P", "M", "G", "GG"]);
 
   normalizeIssue(
@@ -38,7 +38,7 @@ export class JiraIssueNormalizerService {
       priority: JiraIssueNormalizerService.validPriorities.has(priority) ? (priority as IssuePriority) : "Unknown",
       jiraStatus,
       businessStatus: mapJiraStatusToBusinessStatus(jiraStatus),
-      isHotfix: title.includes("[HOTFIX]"),
+      isHotfix: isHotfixIssue(issue),
       qaRejectionCount: qaRejections.length,
       qaRejections,
       createdAt: issue.fields.created,

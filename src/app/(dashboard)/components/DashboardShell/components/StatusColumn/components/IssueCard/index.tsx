@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 
 const priorityClass: Record<string, string> = {
+  HOTFIX:
+    'border-red-300 bg-red-600 text-white dark:border-red-500 dark:bg-red-500 dark:text-white',
   Highest:
     'border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/60 dark:text-red-200',
   High: 'border-orange-300 bg-orange-100 text-orange-800 dark:border-orange-800 dark:bg-orange-950/60 dark:text-orange-200',
@@ -106,18 +108,19 @@ export function IssueCard({
               {issue.complexity}
             </Badge>
           ) : null}
-          <Badge
-            variant="outline"
-            className={cn('border', priorityClass[issue.priority])}
-          >
-            {getPriorityLabel(issue.priority)}
-          </Badge>
           {issue.isHotfix ? (
             <Badge variant="hotfix">
               <Flame className="mr-1 h-3 w-3" />
               HOTFIX
             </Badge>
-          ) : null}
+          ) : (
+            <Badge
+              variant="outline"
+              className={cn('border', priorityClass[issue.priority])}
+            >
+              {getPriorityLabel(issue.priority)}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -127,7 +130,7 @@ export function IssueCard({
           mode === 'tv' ? 'text-lg' : 'text-sm',
         )}
       >
-        {issue.title.replace('[HOTFIX]', '').trim()}
+        {issue.title}
       </h3>
 
       {issue.epic?.key || issue.epic?.name ? (
@@ -239,7 +242,7 @@ export function IssueCard({
                   Histórico de reprovações QA
                 </h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {issue.key} · {issue.title.replace('[HOTFIX]', '').trim()}
+                  {issue.key} · {issue.title}
                 </p>
               </div>
               <button

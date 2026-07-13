@@ -6,7 +6,7 @@ function issue(overrides: Partial<DashboardIssue> = {}): DashboardIssue {
   return {
     id: "10001",
     key: "MURBI-571",
-    title: "[HOTFIX] Ajustar exportacao; validar aspas",
+    title: "Ajustar exportacao; validar aspas",
     issueType: {
       name: "Story"
     },
@@ -18,7 +18,7 @@ function issue(overrides: Partial<DashboardIssue> = {}): DashboardIssue {
     assignee: {
       name: "Ana Silva"
     },
-    priority: "High",
+    priority: "HOTFIX",
     jiraStatus: "Em andamento",
     businessStatus: "In Development",
     isHotfix: true,

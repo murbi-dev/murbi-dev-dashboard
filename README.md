@@ -124,11 +124,11 @@ O mapeamento centralizado fica em `src/lib/status-mapper.ts`.
 
 ## Regra de HOTFIX
 
-Qualquer card com `[HOTFIX]` no título é tratado como crítico operacional:
+Qualquer card com a prioridade `HOTFIX` no Jira é tratado como crítico operacional:
 
 - Fica pinado no topo da coluna
 - Recebe destaque em vermelho
-- Exibe o badge HOTFIX
+- Exibe o badge HOTFIX no lugar do badge de prioridade
 
 ## Modo TV
 

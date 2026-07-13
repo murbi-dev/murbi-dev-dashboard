@@ -39,12 +39,13 @@ const defaultStatusFilters = BUSINESS_STATUSES.reduce(
 );
 
 const priorityOrder: Record<string, number> = {
-  Highest: 0,
-  High: 1,
-  Medium: 2,
-  Low: 3,
-  Lowest: 4,
-  Unknown: 5
+  HOTFIX: 0,
+  Highest: 1,
+  High: 2,
+  Medium: 3,
+  Low: 4,
+  Lowest: 5,
+  Unknown: 6
 };
 
 function sortIssues(issues: DashboardIssue[]) {

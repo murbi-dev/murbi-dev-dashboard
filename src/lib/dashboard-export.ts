@@ -21,10 +21,6 @@ const exportHeaders = [
   "URL"
 ];
 
-function cleanTitle(title: string): string {
-  return title.replace("[HOTFIX]", "").trim();
-}
-
 function formatBoolean(value: boolean): string {
   return value ? "Sim" : "Não";
 }
@@ -43,7 +39,7 @@ function escapeHtml(value: string | number | undefined): string {
 function issueToExportRow(issue: DashboardIssue): Array<string | number | undefined> {
   return [
     issue.key,
-    cleanTitle(issue.title),
+    issue.title,
     issue.issueType.name,
     issue.complexity,
     getPriorityLabel(issue.priority),

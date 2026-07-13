@@ -1,5 +1,6 @@
 import { jiraConfigProvider, JiraConfigProvider } from "@/lib/jira/jira-config.provider";
 import { JiraClient } from "@/clients/jira/jira.client";
+import { isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
 import type { IssueSearchPayload, IssueSearchResult } from "@/types/issue-search";
 import type { JiraConfig, JiraIssue, JiraSearchResponse } from "@/types/jira";
 
@@ -32,7 +33,7 @@ export class JiraIssueSearchService {
 
     try {
       const client = this.clientFactory(config);
-      const fields = ["summary", "status", "assignee", "updated"].join(",");
+      const fields = ["summary", "status", "priority", "assignee", "updated"].join(",");
       const jql = encodeURIComponent(this.buildSearchJql(normalizedQuery));
       const response = await client.get<JiraSearchResponse>(
         `/rest/api/3/search/jql?jql=${jql}&fields=${fields}&maxResults=${JiraIssueSearchService.maxSearchResults}`
@@ -78,7 +79,7 @@ export class JiraIssueSearchService {
         name: issue.fields.assignee?.displayName ?? "Sem responsável",
         avatarUrl: issue.fields.assignee?.avatarUrls?.["48x48"]
       },
-      isHotfix: title.includes("[HOTFIX]"),
+      isHotfix: isHotfixIssue(issue),
       updatedAt: issue.fields.updated,
       url: `${baseUrl}/browse/${issue.key}`
     };

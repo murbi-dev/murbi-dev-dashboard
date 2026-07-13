@@ -217,9 +217,13 @@ describe("JiraQualityService", () => {
   it("considers only HOTFIX deliveries when hotfixOnly is true", async () => {
     const issues = [
       makeIssue("MUR-1", { summary: "Tarefa comum" }),
-      makeIssue("MUR-2", { summary: "[HOTFIX] Correção urgente" }, qaRejectionHistory()),
+      makeIssue(
+        "MUR-2",
+        { summary: "Correção urgente", priority: { name: "HOTFIX" } },
+        qaRejectionHistory()
+      ),
       makeIssue("MUR-3", { summary: "Outra tarefa comum" }),
-      makeIssue("MUR-4", { summary: "[HOTFIX] Outro fix" })
+      makeIssue("MUR-4", { summary: "Outro fix", priority: { name: "HOTFIX" } })
     ];
 
     const service = new JiraQualityService(

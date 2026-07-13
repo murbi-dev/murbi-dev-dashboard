@@ -5,7 +5,7 @@ export type BusinessStatus =
   | "Finalizing"
   | "Done";
 
-export type IssuePriority = "Highest" | "High" | "Medium" | "Low" | "Lowest" | "Unknown";
+export type IssuePriority = "HOTFIX" | "Highest" | "High" | "Medium" | "Low" | "Lowest" | "Unknown";
 export type IssueComplexity = "PP" | "P" | "M" | "G" | "GG";
 
 export type QaRejectionEvent = {

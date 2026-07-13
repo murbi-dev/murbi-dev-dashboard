@@ -14,7 +14,8 @@ function doneIssue(
   key: string,
   inProgressDate: string,
   doneDate: string,
-  summary = "Done issue"
+  summary = "Done issue",
+  priority = "Medium"
 ) {
   return {
     id: key,
@@ -25,6 +26,7 @@ function doneIssue(
       updated: doneDate,
       status: { name: "Concluído" },
       issuetype: { name: "Story" },
+      priority: { name: priority },
       assignee: { displayName: "Dev" }
     },
     changelog: {
@@ -47,7 +49,8 @@ function activeIssue(
   inProgressDate: string,
   currentStatus = "Em andamento",
   assigneeName = "Dev",
-  summary = "Active issue"
+  summary = "Active issue",
+  priority = "Medium"
 ) {
   return {
     id: key,
@@ -58,6 +61,7 @@ function activeIssue(
       updated: "2026-06-10T10:00:00.000Z",
       status: { name: currentStatus },
       issuetype: { name: "Story" },
+      priority: { name: priority },
       assignee: { displayName: assigneeName }
     },
     changelog: {
@@ -169,7 +173,8 @@ describe("JiraFlowService", () => {
                     "MUR-2",
                     "2026-01-02T10:00:00.000Z",
                     "2026-01-06T10:00:00.000Z",
-                    "[HOTFIX] Correção urgente"
+                    "Correção urgente",
+                    "HOTFIX"
                   )
                 ]
               } as T;
@@ -182,7 +187,7 @@ describe("JiraFlowService", () => {
               isLast: true,
               issues: [
                 activeIssue("MUR-3", "2026-06-01T10:00:00.000Z", "Em andamento", "Dev", "Ativa comum"),
-                activeIssue("MUR-4", "2026-06-05T10:00:00.000Z", "Em andamento", "Dev", "[HOTFIX] Ativa")
+                activeIssue("MUR-4", "2026-06-05T10:00:00.000Z", "Em andamento", "Dev", "Ativa", "HOTFIX")
               ]
             } as T;
           }
