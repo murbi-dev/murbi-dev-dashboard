@@ -22,6 +22,7 @@ function issue(overrides: {
     jiraStatus: overrides.businessStatus === "Done" ? "Concluído" : "Em andamento",
     businessStatus: overrides.businessStatus,
     isHotfix: false,
+    isAiDev: false,
     qaRejectionCount: overrides.qaRejectionCount,
     qaRejections: [],
     createdAt: "2026-06-01T10:00:00.000-0300",

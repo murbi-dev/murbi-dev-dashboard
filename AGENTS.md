@@ -9,6 +9,7 @@ Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arq
 - Dashboard operacional sobre Jira para suporte, negócio, operações e gestão.
 - Não é substituto do Jira. Mostra uma visão simplificada do Kanban contínuo, sem backlog.
 - Foco: leitura rápida, modo TV, cards principais fora do backlog, HOTFIX, status de negócio e atualização automática.
+- Campo Jira `Fluxo Dev` (`customfield_10414`, valores `Dev Humano` e `Dev IA`) vira `isAiDev` no card, com badge roxo `IA` e filtro `Dev IA` no modo standard.
 - Tela `/metrics` possui abas `Overview` (resumo operacional em tempo real com cards de Cards Ativos, Concluídos, Responsáveis e HOTFIX), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate com filtro de período e opção Apenas HOTFIX) e `Flow` (Lead Time e Aging com filtro de período e opção Apenas HOTFIX).
 - Lógica de rejeição QA centralizada em `src/lib/jira/jira-metrics.helper.ts` — usada tanto pelo dashboard quanto pelas métricas de qualidade.
 - Lógica de fluxo (Lead Time, Aging) centralizada em `src/lib/jira/jira-flow.helper.ts` — usada pelo serviço de flow.

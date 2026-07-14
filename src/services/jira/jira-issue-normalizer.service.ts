@@ -6,6 +6,8 @@ import type { JiraBoard, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraI
 export class JiraIssueNormalizerService {
   private static readonly validPriorities = new Set(["HOTFIX", "Highest", "High", "Medium", "Low", "Lowest"]);
   private static readonly validComplexities = new Set(["PP", "P", "M", "G", "GG"]);
+  /** Value of the Jira "Fluxo Dev" field that marks an issue as developed by AI. */
+  private static readonly aiDevFlowValue = "dev ia";
 
   normalizeIssue(
     issue: JiraIssue,
@@ -39,6 +41,7 @@ export class JiraIssueNormalizerService {
       jiraStatus,
       businessStatus: mapJiraStatusToBusinessStatus(jiraStatus),
       isHotfix: isHotfixIssue(issue),
+      isAiDev: this.getIsAiDev(issue, fieldMetadata.devFlowFieldId),
       qaRejectionCount: qaRejections.length,
       qaRejections,
       createdAt: issue.fields.created,
@@ -78,20 +81,7 @@ export class JiraIssueNormalizerService {
   }
 
   private getComplexityField(issue: JiraIssue, fieldId?: string): IssueComplexity | undefined {
-    if (!fieldId) {
-      return undefined;
-    }
-
-    const value = issue.fields[fieldId];
-    const rawValue =
-      typeof value === "string"
-        ? value
-        : value &&
-            typeof value === "object" &&
-            "value" in value &&
-            typeof value.value === "string"
-          ? value.value
-          : undefined;
+    const rawValue = this.getOptionFieldValue(issue, fieldId);
 
     if (!rawValue) {
       return undefined;
@@ -100,6 +90,28 @@ export class JiraIssueNormalizerService {
     const normalizedValue = rawValue.trim().toUpperCase();
 
     return JiraIssueNormalizerService.validComplexities.has(normalizedValue) ? (normalizedValue as IssueComplexity) : undefined;
+  }
+
+  private getIsAiDev(issue: JiraIssue, fieldId?: string): boolean {
+    return this.getOptionFieldValue(issue, fieldId)?.trim().toLowerCase() === JiraIssueNormalizerService.aiDevFlowValue;
+  }
+
+  private getOptionFieldValue(issue: JiraIssue, fieldId?: string): string | undefined {
+    if (!fieldId) {
+      return undefined;
+    }
+
+    const value = issue.fields[fieldId];
+
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (value && typeof value === "object" && "value" in value && typeof value.value === "string") {
+      return value.value;
+    }
+
+    return undefined;
   }
 
   private getStringField(issue: JiraIssue, fieldId?: string): string | undefined {

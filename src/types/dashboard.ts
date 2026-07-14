@@ -36,6 +36,7 @@ export type DashboardIssue = {
   jiraStatus: string;
   businessStatus: BusinessStatus;
   isHotfix: boolean;
+  isAiDev: boolean;
   qaRejectionCount: number;
   qaRejections: QaRejectionEvent[];
   createdAt: string;
@@ -60,6 +61,7 @@ export type DashboardPayload = {
 export type DashboardFilters = {
   query: string;
   hotfixOnly: boolean;
+  aiDevOnly: boolean;
   assignee: string;
   priority: string;
 };

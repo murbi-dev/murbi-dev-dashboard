@@ -120,6 +120,18 @@ Regra atual:
 
 Não tornar case-insensitive sem validar títulos reais do Jira.
 
+## Fluxo Dev (Dev IA)
+
+Regra atual:
+
+- o campo Jira `Fluxo Dev` (`customfield_10414`) é um select com os valores `Dev Humano` e `Dev IA`;
+- o id do campo é resolvido por nome em `JiraFieldMetadataMapper` (`devFlowFieldId`), nunca hardcoded no serviço;
+- `JiraDashboardService` inclui `devFlowFieldId` nos campos pedidos ao Jira;
+- `JiraIssueNormalizerService` transforma o valor `Dev IA` (comparação sem case) em `isAiDev = true`; `Dev Humano`, campo vazio ou campo ausente resultam em `isAiDev = false`;
+- o card exibe badge roxo com ícone `Sparkles` e texto `IA` quando `isAiDev = true`;
+- o modo standard tem o filtro `Dev IA`, que mostra apenas cards com `isAiDev = true`;
+- a exportação para Excel inclui a coluna `Dev IA` (`Sim`/`Não`).
+
 ## Dados Do Card
 
 O card mostra:
@@ -129,6 +141,7 @@ O card mostra:
 - data de criação da issue no Jira;
 - última atualização;
 - complexidade quando o campo Jira `Complexidade` (`customfield_10345`) vier preenchido com `PP`, `P`, `M`, `G` ou `GG`;
+- badge `IA` quando o campo Jira `Fluxo Dev` (`customfield_10414`) vier com `Dev IA`;
 - data limite quando o campo Jira `Data limite` (`duedate`) vier preenchido;
 - ícone real do tipo da issue vindo de `issuetype.iconUrl`, com tooltip usando `issuetype.name`;
 - épico quando vier via `parent` épico ou campos de épico detectados nos metadados do Jira, com cor quando o campo real `Issue color` estiver disponível.

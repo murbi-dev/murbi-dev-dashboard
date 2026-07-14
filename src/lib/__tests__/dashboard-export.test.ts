@@ -22,6 +22,7 @@ function issue(overrides: Partial<DashboardIssue> = {}): DashboardIssue {
     jiraStatus: "Em andamento",
     businessStatus: "In Development",
     isHotfix: true,
+    isAiDev: true,
     qaRejectionCount: 2,
     qaRejections: [],
     createdAt: "2026-06-01T10:00:00.000-0300",
@@ -43,5 +44,12 @@ describe("buildDashboardExportXls", () => {
     expect(xls).toContain("<td>Ajustar exportacao; validar aspas</td>");
     expect(xls).toContain("<td>Epico &quot;Operacional&quot;</td>");
     expect(xls).toContain("<td>Sim</td>");
+  });
+
+  it("exports the Dev IA column for each issue", () => {
+    const xls = buildDashboardExportXls([issue({ isHotfix: false, isAiDev: true })]);
+
+    expect(xls).toContain("<th>Dev IA</th>");
+    expect(xls).toContain("<td>Ana Silva</td><td>Não</td><td>Sim</td>");
   });
 });

@@ -81,6 +81,7 @@ export type JiraField = {
 
 export type JiraDashboardFieldMetadata = {
   complexityFieldId?: string;
+  devFlowFieldId?: string;
   epicLinkFieldId?: string;
   epicNameFieldId?: string;
   issueColorFieldId?: string;

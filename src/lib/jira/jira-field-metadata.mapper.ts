@@ -2,6 +2,7 @@ import type { JiraDashboardFieldMetadata, JiraField } from "@/types/jira";
 
 export class JiraFieldMetadataMapper {
   private static readonly complexityFieldNames = new Set(["complexidade"]);
+  private static readonly devFlowFieldNames = new Set(["fluxo dev"]);
   private static readonly epicLinkFieldNames = new Set(["epic link"]);
   private static readonly epicNameFieldNames = new Set(["epic name"]);
   private static readonly issueColorFieldNames = new Set(["issue color"]);
@@ -14,6 +15,10 @@ export class JiraFieldMetadataMapper {
   getDashboardFieldMetadata(fields: JiraField[]): JiraDashboardFieldMetadata {
     const complexityFieldId = fields.find((field) =>
       JiraFieldMetadataMapper.complexityFieldNames.has(this.normalizeFieldName(field.name))
+    )?.id;
+
+    const devFlowFieldId = fields.find((field) =>
+      JiraFieldMetadataMapper.devFlowFieldNames.has(this.normalizeFieldName(field.name))
     )?.id;
 
     const epicLinkFieldId = fields.find(
@@ -39,6 +44,7 @@ export class JiraFieldMetadataMapper {
 
     return {
       complexityFieldId,
+      devFlowFieldId,
       epicLinkFieldId,
       epicNameFieldId,
       issueColorFieldId,

@@ -62,4 +62,38 @@ describe("JiraIssueNormalizerService", () => {
     expect(issue.assignee.name).toBe("Henrique Mayrlon da Silva Lourenço");
     expect(issue.url).toBe("https://murbi-team.atlassian.net/browse/MURBI-571");
   });
+
+  it("marks the issue as AI dev when the Fluxo Dev field is Dev IA", () => {
+    const issue = normalizer.normalizeIssue(
+      jiraIssueFixture({
+        fields: {
+          ...jiraIssueFixture().fields,
+          customfield_10414: { value: "Dev IA", id: "10171" }
+        }
+      }),
+      "https://murbi-team.atlassian.net",
+      { devFlowFieldId: "customfield_10414" }
+    );
+
+    expect(issue.isAiDev).toBe(true);
+  });
+
+  it("does not mark the issue as AI dev for Dev Humano or a missing Fluxo Dev field", () => {
+    const humanIssue = normalizer.normalizeIssue(
+      jiraIssueFixture({
+        fields: {
+          ...jiraIssueFixture().fields,
+          customfield_10414: { value: "Dev Humano", id: "10170" }
+        }
+      }),
+      "https://murbi-team.atlassian.net",
+      { devFlowFieldId: "customfield_10414" }
+    );
+    const emptyIssue = normalizer.normalizeIssue(jiraIssueFixture(), "https://murbi-team.atlassian.net", {
+      devFlowFieldId: "customfield_10414"
+    });
+
+    expect(humanIssue.isAiDev).toBe(false);
+    expect(emptyIssue.isAiDev).toBe(false);
+  });
 });

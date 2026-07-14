@@ -61,6 +61,7 @@ Estado:
 
 - busca por chave, título, responsável ou status real do Jira;
 - HOTFIX only;
+- Dev IA only (cards com `Fluxo Dev = Dev IA`);
 - responsável;
 - prioridade;
 - status técnico por coluna, quando a coluna tiver mais de um `jiraStatus`.

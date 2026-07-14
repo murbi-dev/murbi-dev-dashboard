@@ -51,6 +51,7 @@ export class JiraDashboardService {
 
       const issueFields = this.buildJiraIssueFields([
         fieldMetadata.complexityFieldId,
+        fieldMetadata.devFlowFieldId,
         fieldMetadata.epicLinkFieldId,
         fieldMetadata.epicNameFieldId
       ]);

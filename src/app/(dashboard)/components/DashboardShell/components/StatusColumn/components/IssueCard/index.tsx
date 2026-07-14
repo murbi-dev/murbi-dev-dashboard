@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { AlertTriangle, CalendarClock, Clock3, Flame, RotateCcw, UserCircle2, X } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Clock3, Flame, RotateCcw, Sparkles, UserCircle2, X } from 'lucide-react';
 import { getStaleLevel } from '@/lib/alerts';
 import {
   formatRelativeAge,
@@ -103,6 +103,16 @@ export function IssueCard({
           </a>
         </div>
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
+          {issue.isAiDev ? (
+            <Badge
+              variant="outline"
+              className="gap-1 border-violet-300 bg-violet-100 font-semibold text-violet-800 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
+              title="Fluxo Dev: Dev IA"
+            >
+              <Sparkles className="h-3 w-3" />
+              IA
+            </Badge>
+          ) : null}
           {issue.complexity ? (
             <Badge variant="secondary" className="font-semibold">
               {issue.complexity}

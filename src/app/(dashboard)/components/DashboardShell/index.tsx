@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search } from "lucide-react";
+import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -26,6 +26,7 @@ const emptyIssues: DashboardIssue[] = [];
 const defaultFilters: DashboardFilters = {
   query: "",
   hotfixOnly: false,
+  aiDevOnly: false,
   assignee: "all",
   priority: "all"
 };
@@ -93,10 +94,11 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           issue.assignee.name.toLowerCase().includes(query) ||
           issue.jiraStatus.toLowerCase().includes(query);
         const matchesHotfix = !filters.hotfixOnly || issue.isHotfix;
+        const matchesAiDev = !filters.aiDevOnly || issue.isAiDev;
         const matchesAssignee = filters.assignee === "all" || issue.assignee.name === filters.assignee;
         const matchesPriority = filters.priority === "all" || issue.priority === filters.priority;
 
-        return matchesQuery && matchesHotfix && matchesAssignee && matchesPriority;
+        return matchesQuery && matchesHotfix && matchesAiDev && matchesAssignee && matchesPriority;
       })
     );
   }, [filters, issues]);
@@ -267,6 +269,19 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
             >
               <Flame className="h-4 w-4" />
               HOTFIX
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className={cn(
+                filters.aiDevOnly &&
+                  "border-violet-500 bg-violet-600 text-white hover:bg-violet-600/90 hover:text-white dark:border-violet-500 dark:bg-violet-600 dark:hover:bg-violet-600/90"
+              )}
+              aria-pressed={filters.aiDevOnly}
+              onClick={() => setFilters((current) => ({ ...current, aiDevOnly: !current.aiDevOnly }))}
+            >
+              <Sparkles className="h-4 w-4" />
+              Dev IA
             </Button>
             <select
               className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
