@@ -89,10 +89,12 @@ Mapeamento atual:
 | Interno | Label UI | Jira |
 | --- | --- | --- |
 | `Waiting` | Pendente | `Tarefas pendentes` |
-| `In Development` | Em Desenvolvimento | `Em andamento`, `Pull request`, `Pronto para QA` |
+| `In Development` | Em Desenvolvimento | `Em andamento`, `Aprovação`, `Pull request`, `Pronto para QA` |
 | `Validation` | Em Teste | `Teste QA` |
 | `Finalizing` | Aguardando Deploy | `Pronto para PROD` |
 | `Done` | Em Produção | `Concluído`, `Concluido` |
+
+O status `Aprovação` é o gate exclusivo do fluxo de IA (`Fluxo Dev = Dev IA`), onde o card espera a aprovação humana do PRD antes do código. Ele **não tem coluna própria** no board de negócio: cai dentro de **Em Desenvolvimento** (aparece como chip `Aprovação` no filtro por status Jira da coluna). A identidade de IA continua visível pelo badge `IA` (violeta/`Sparkles`) no próprio card. Como métrica, a espera nesse gate é medida à parte — ver **Tempo de Aprovação (IA)** em Fluxo (Flow Metrics), que rastreia o status `Aprovação` pelo nome, independentemente da coluna.
 
 Regras:
 
@@ -219,7 +221,7 @@ Endpoint: `GET /api/metrics/flow?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&hotfixO
 
 Service: `src/services/jira/flow.service.ts` (`JiraFlowService`)
 
-Métricas principais: **Lead Time** e **Aging**.
+Métricas principais: **Lead Time**, **Aging** e **Tempo de Aprovação (IA)**.
 
 ### Fluxo
 
@@ -227,13 +229,20 @@ Métricas principais: **Lead Time** e **Aging**.
 frontend -> /api/metrics/flow -> JiraFlowService -> Jira REST API (via JiraClient) -> helper de fluxo -> resposta
 ```
 
+O service resolve dinamicamente o `devFlowFieldId` (campo `Fluxo Dev`) via `JiraFieldMetadataCacheService` e o inclui na busca, para conseguir separar cards de IA (`Fluxo Dev = Dev IA`) dos humanos.
+
 ### Cálculo
 
 - Lead Time considera tickets concluídos no período.
 - Aging considera tickets ativos no período.
-- `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues com prioridade `HOTFIX`.
+- **Tempo de Aprovação (IA)** mede quanto tempo o card ficou no gate `Aprovação` (espera pela aprovação humana do PRD): da primeira entrada em `Aprovação` até a saída — ou até agora, se ainda estiver no gate. É inerentemente **IA-only**, pois só o fluxo `Dev IA` passa por esse status (`calculateApprovalWait` em `src/lib/jira/jira-flow.helper.ts`).
+- **Segmentação IA × Humano:** Lead Time e Aging também são calculados separadamente para o fluxo de IA e o humano (`leadTimeByFlow` / `agingByFlow`, cada um com `ai` e `human`), usando `isAiDevIssue`. A UI mostra os dois lado a lado (IA com cor violeta + ícone `Sparkles`) e marca cada item crítico de IA com o badge `Sparkles` (`isAiDev` em `AgingIssue`).
+- `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues com prioridade `HOTFIX`. Como HOTFIX é fluxo humano, o Tempo de Aprovação tende a ficar vazio nesse filtro.
+
+Estatísticas de fluxo (média, P50, P75, P90, `totalIssues`) são padronizadas por `buildFlowStats`; `null` quando não há dados no período.
 
 ### Limitações
 
 - O filtro HOTFIX segue a mesma regra de prioridade do dashboard.
-- O cálculo depende do changelog para identificar entrada em andamento e idade dos cards ativos.
+- O cálculo depende do changelog para identificar entrada em andamento, idade dos cards ativos e passagem pelo gate de aprovação.
+- A segmentação IA × Humano depende de o campo `Fluxo Dev` estar preenchido; cards sem o campo (ou quando o `devFlowFieldId` não é resolvido) caem no lado **Humano**.

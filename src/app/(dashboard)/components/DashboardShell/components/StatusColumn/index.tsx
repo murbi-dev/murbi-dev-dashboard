@@ -3,7 +3,7 @@ import { IssueCard } from "./components/IssueCard";
 import { cn } from "@/lib/utils";
 import { getBusinessStatusLabel } from "@/lib/display";
 
-const developmentStatusOrder = ["Em andamento", "In Progress", "Pull Request", "Pull request", "Pronto para QA"];
+const developmentStatusOrder = ["Aprovação", "Em andamento", "In Progress", "Pull Request", "Pull request", "Pronto para QA"];
 
 const statusAccent: Record<BusinessStatus, string> = {
   Waiting: "bg-slate-500",
@@ -51,7 +51,7 @@ export function StatusColumn({
       <div className={cn("border-b", mode === "tv" ? "p-2.5" : "p-3")}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <span className={cn("h-2.5 w-2.5 rounded-full", statusAccent[status])} />
+            <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", statusAccent[status])} />
             <h2 className={cn("truncate font-semibold", mode === "tv" ? "text-lg" : "text-sm")}>
               {getBusinessStatusLabel(status)}
             </h2>

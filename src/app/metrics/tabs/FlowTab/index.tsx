@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { FlowSkeleton } from "./components/FlowSkeleton";
 import { LeadTimeSection } from "./components/LeadTimeSection";
+import { ApprovalWaitSection } from "./components/ApprovalWaitSection";
 import { AgingSection } from "./components/AgingSection";
 import type { FlowMetricsPayload } from "@/types/flow";
 
@@ -143,7 +144,7 @@ export function FlowTab() {
       ) : data ? (
         <>
           {data.leadTime ? (
-            <LeadTimeSection data={data.leadTime} />
+            <LeadTimeSection data={data.leadTime} byFlow={data.leadTimeByFlow} />
           ) : (
             <Card className="shadow-operational">
               <CardContent className="p-8 text-center text-sm text-muted-foreground">
@@ -152,8 +153,18 @@ export function FlowTab() {
             </Card>
           )}
 
+          {data.approvalWait ? (
+            <ApprovalWaitSection data={data.approvalWait} />
+          ) : (
+            <Card className="shadow-operational">
+              <CardContent className="p-8 text-center text-sm text-muted-foreground">
+                Nenhum card passou pelo gate de aprovação de IA no período selecionado.
+              </CardContent>
+            </Card>
+          )}
+
           {data.aging ? (
-            <AgingSection data={data.aging} />
+            <AgingSection data={data.aging} byFlow={data.agingByFlow} />
           ) : (
             <Card className="shadow-operational">
               <CardContent className="p-8 text-center text-sm text-muted-foreground">

@@ -3,9 +3,30 @@
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-type Metric = "leadTime" | "aging" | "p50" | "p75" | "p90";
+type Metric = "leadTime" | "aging" | "approvalWait" | "p50" | "p75" | "p90";
 
 const content: Record<Metric, { title: string; sections: Array<{ label: string; text: string }> }> = {
+  approvalWait: {
+    title: "Tempo de Aprovação (IA)",
+    sections: [
+      {
+        label: "O que mede",
+        text: "Tempo que um card fica parado no gate de aprovação do PRD, aguardando um humano aprovar antes de a IA começar a codar."
+      },
+      {
+        label: "Como é calculado",
+        text: "Tempo entre a primeira entrada em \"Aprovação\" e a saída desse status (ou o momento atual, se ainda estiver no gate)."
+      },
+      {
+        label: "Dados utilizados",
+        text: "Histórico de status do Jira. Exclusivo do fluxo de IA (Fluxo Dev = Dev IA), único que passa por esse gate."
+      },
+      {
+        label: "Como interpretar",
+        text: "Valores altos indicam que a IA está esperando muito pela aprovação humana do PRD — não é tempo de trabalho, é tempo de espera."
+      }
+    ]
+  },
   leadTime: {
     title: "Lead Time",
     sections: [

@@ -1,4 +1,4 @@
-import { ListOrdered } from "lucide-react";
+import { ListOrdered, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { AgingIssue } from "@/types/flow";
 
@@ -34,7 +34,17 @@ export function CriticalIssuesSection({ issues }: { issues: AgingIssue[] }) {
           <tbody>
             {issues.map((issue) => (
               <tr key={issue.key} className="border-b last:border-0 hover:bg-muted/30">
-                <td className="px-4 py-2 font-mono text-xs font-medium">{issue.key}</td>
+                <td className="px-4 py-2 font-mono text-xs font-medium">
+                  <span className="inline-flex items-center gap-1">
+                    {issue.key}
+                    {issue.isAiDev ? (
+                      <Sparkles
+                        className="h-3 w-3 text-violet-600 dark:text-violet-400"
+                        aria-label="Fluxo de IA"
+                      />
+                    ) : null}
+                  </span>
+                </td>
                 <td className="max-w-xs truncate px-4 py-2">{issue.summary}</td>
                 <td className="px-4 py-2 text-muted-foreground">{issue.assignee}</td>
                 <td className="px-4 py-2">{issue.status}</td>

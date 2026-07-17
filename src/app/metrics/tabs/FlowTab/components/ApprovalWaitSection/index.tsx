@@ -1,7 +1,6 @@
-import { Gauge, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { TooltipContent } from "@/app/metrics/tabs/FlowTab/components/TooltipContent";
-import { ByFlowComparison } from "@/app/metrics/tabs/FlowTab/components/ByFlowComparison";
 import type { FlowMetricsPayload } from "@/types/flow";
 
 function formatNumber(value: number): string {
@@ -13,32 +12,29 @@ function formatDays(value: number): string {
   return `${formatNumber(value)} dias`;
 }
 
-export function LeadTimeSection({
-  data,
-  byFlow
-}: {
-  data: NonNullable<FlowMetricsPayload["leadTime"]>;
-  byFlow: FlowMetricsPayload["leadTimeByFlow"];
-}) {
+export function ApprovalWaitSection({ data }: { data: NonNullable<FlowMetricsPayload["approvalWait"]> }) {
   return (
     <section>
-      <div className="mb-3 flex items-center gap-2">
-        <Gauge className="h-5 w-5 text-muted-foreground" />
-        <h2 className="text-base font-semibold">Lead Time</h2>
+      <div className="mb-1 flex items-center gap-2">
+        <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
+        <h2 className="text-base font-semibold">Tempo de Aprovação (IA)</h2>
       </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Espera no gate de PRD — exclusivo do fluxo de IA (Dev IA).
+      </p>
 
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-operational">
+        <Card className="border-violet-200 shadow-operational dark:border-violet-900/60">
           <CardHeader className="flex flex-row items-start justify-between p-4 pb-2">
             <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Lead Time Médio</h3>
-              <p className="text-xs text-muted-foreground">{data.totalIssues} entregas</p>
+              <h3 className="text-sm font-medium text-muted-foreground">Espera Média</h3>
+              <p className="text-xs text-muted-foreground">{data.totalIssues} cards no gate</p>
             </div>
-            <TrendingUp className="h-5 w-5 text-muted-foreground" />
+            <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <p className="text-3xl font-bold">{formatDays(data.average)}</p>
-            <TooltipContent metric="leadTime" />
+            <TooltipContent metric="approvalWait" />
           </CardContent>
         </Card>
 
@@ -75,8 +71,6 @@ export function LeadTimeSection({
           </CardContent>
         </Card>
       </div>
-
-      <ByFlowComparison label="Lead Time por fluxo" data={byFlow} />
     </section>
   );
 }

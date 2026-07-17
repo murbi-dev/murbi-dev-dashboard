@@ -47,13 +47,16 @@ import { JiraClient } from "@/clients/jira/jira.client";
 import {
   calculateLeadTime,
   calculateAging,
+  calculateApprovalWait,
   isActiveIssue,
+  isAiDevIssue,
   getFirstInProgressDate,
-  calculatePercentile
+  buildFlowStats
 } from "@/lib/jira/jira-flow.helper";
 import { isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
-import type { FlowMetricsPayload, AgingIssue } from "@/types/flow";
-import type { JiraConfig, JiraSearchResponse } from "@/types/jira";
+import { jiraFieldMetadataCacheService, JiraFieldMetadataCacheService } from "./field-metadata-cache.service";
+import type { FlowByDevType, FlowMetricsPayload, FlowStats, AgingIssue } from "@/types/flow";
+import type { JiraConfig, JiraIssue, JiraSearchResponse } from "@/types/jira";
 
 export class JiraFlowService {
   private static readonly maxResults = 100;
@@ -61,7 +64,8 @@ export class JiraFlowService {
 
   constructor(
     private readonly configProvider: JiraConfigProvider = jiraConfigProvider,
-    private readonly clientFactory: (config: JiraConfig) => JiraClient = (config) => new JiraClient(config)
+    private readonly clientFactory: (config: JiraConfig) => JiraClient = (config) => new JiraClient(config),
+    private readonly fieldMetadataCacheService: JiraFieldMetadataCacheService = jiraFieldMetadataCacheService
   ) {}
 
   /**
@@ -85,22 +89,28 @@ export class JiraFlowService {
 
     try {
       const client = this.clientFactory(config);
+      const fieldMetadata = await this.fieldMetadataCacheService.getCachedFieldMetadata(client, config.boardId);
+      const devFlowFieldId = fieldMetadata.devFlowFieldId;
+      const fields = devFlowFieldId
+        ? `${JiraFlowService.baseFields},${devFlowFieldId}`
+        : JiraFlowService.baseFields;
 
       const [fetchedDoneIssues, fetchedActiveIssues] = await Promise.all([
-        this.fetchDoneIssues(client, config.boardId, startDate, endDate),
-        this.fetchActiveIssues(client, config.boardId)
+        this.fetchDoneIssues(client, config.boardId, startDate, endDate, fields),
+        this.fetchActiveIssues(client, config.boardId, fields)
       ]);
 
       const doneIssues = hotfixOnly ? fetchedDoneIssues.filter(isHotfixIssue) : fetchedDoneIssues;
       const activeIssues = hotfixOnly ? fetchedActiveIssues.filter(isHotfixIssue) : fetchedActiveIssues;
-
-      const leadTime = this.computeLeadTime(doneIssues);
-      const aging = this.computeAging(computeActiveIssuesInPeriod(activeIssues, startDate, endDate));
+      const activeInPeriod = computeActiveIssuesInPeriod(activeIssues, startDate, endDate);
 
       return {
         dateRange: { start: startDate, end: endDate },
-        leadTime,
-        aging
+        leadTime: this.computeLeadTime(doneIssues),
+        leadTimeByFlow: this.computeStatsByFlow(doneIssues, devFlowFieldId, calculateLeadTime),
+        aging: this.computeAging(activeInPeriod, devFlowFieldId),
+        agingByFlow: this.computeStatsByFlow(activeInPeriod, devFlowFieldId, calculateAging),
+        approvalWait: this.computeApprovalWait([...doneIssues, ...activeIssues])
       };
     } catch (error) {
       console.error("Error fetching flow metrics:", error);
@@ -108,9 +118,7 @@ export class JiraFlowService {
     }
   }
 
-  private computeLeadTime(issues: JiraSearchResponse["issues"]): FlowMetricsPayload["leadTime"] {
-    if (issues.length === 0) return null;
-
+  private computeLeadTime(issues: JiraSearchResponse["issues"]): FlowStats {
     const leadTimes: number[] = [];
 
     for (const issue of issues) {
@@ -120,22 +128,52 @@ export class JiraFlowService {
       }
     }
 
-    if (leadTimes.length === 0) return null;
-
-    leadTimes.sort((a, b) => a - b);
-
-    const sum = leadTimes.reduce((acc, v) => acc + v, 0);
-
-    return {
-      average: roundTo1(sum / leadTimes.length),
-      p50: calculatePercentile(leadTimes, 50),
-      p75: calculatePercentile(leadTimes, 75),
-      p90: calculatePercentile(leadTimes, 90),
-      totalIssues: leadTimes.length
-    };
+    return buildFlowStats(leadTimes);
   }
 
-  private computeAging(issues: JiraSearchResponse["issues"]): FlowMetricsPayload["aging"] {
+  /**
+   * Splits a per-issue metric (Lead Time or Aging) by dev flow (IA × Humano)
+   * and builds independent statistics for each side.
+   */
+  private computeStatsByFlow(
+    issues: JiraSearchResponse["issues"],
+    devFlowFieldId: string | undefined,
+    calcular: (issue: JiraIssue) => number | null
+  ): FlowByDevType {
+    const ia: number[] = [];
+    const humano: number[] = [];
+
+    for (const issue of issues) {
+      const valor = calcular(issue);
+      if (valor === null) continue;
+
+      (isAiDevIssue(issue, devFlowFieldId) ? ia : humano).push(valor);
+    }
+
+    return { ai: buildFlowStats(ia), human: buildFlowStats(humano) };
+  }
+
+  /**
+   * Builds the "Tempo de Aprovação (IA)" metric — how long cards waited in the
+   * "Aprovação" PRD gate. Only AI-flow cards ever pass through this gate.
+   */
+  private computeApprovalWait(issues: JiraSearchResponse["issues"]): FlowStats {
+    const esperas: number[] = [];
+
+    for (const issue of issues) {
+      const espera = calculateApprovalWait(issue);
+      if (espera !== null) {
+        esperas.push(espera);
+      }
+    }
+
+    return buildFlowStats(esperas);
+  }
+
+  private computeAging(
+    issues: JiraSearchResponse["issues"],
+    devFlowFieldId?: string
+  ): FlowMetricsPayload["aging"] {
     if (issues.length === 0) return null;
 
     const agingValues: number[] = [];
@@ -151,7 +189,8 @@ export class JiraFlowService {
         summary: issue.fields.summary,
         assignee: issue.fields.assignee?.displayName ?? "Sem responsável",
         status: issue.fields.status.name,
-        agingDays: aging
+        agingDays: aging,
+        isAiDev: isAiDevIssue(issue, devFlowFieldId)
       });
     }
 
@@ -175,7 +214,8 @@ export class JiraFlowService {
     client: JiraClient,
     boardId: string,
     startDate: string,
-    endDate: string
+    endDate: string,
+    fields: string
   ): Promise<JiraSearchResponse["issues"]> {
     const issues: JiraSearchResponse["issues"] = [];
     let startAt = 0;
@@ -188,7 +228,7 @@ export class JiraFlowService {
 
     while (startAt < total) {
       const response = await client.get<JiraSearchResponse>(
-        `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${JiraFlowService.baseFields}&expand=changelog&startAt=${startAt}&maxResults=${JiraFlowService.maxResults}`
+        `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${fields}&expand=changelog&startAt=${startAt}&maxResults=${JiraFlowService.maxResults}`
       );
 
       issues.push(...response.issues);
@@ -206,7 +246,8 @@ export class JiraFlowService {
 
   private async fetchActiveIssues(
     client: JiraClient,
-    boardId: string
+    boardId: string,
+    fields: string
   ): Promise<JiraSearchResponse["issues"]> {
     const issues: JiraSearchResponse["issues"] = [];
     let startAt = 0;
@@ -218,7 +259,7 @@ export class JiraFlowService {
 
     while (startAt < total) {
       const response = await client.get<JiraSearchResponse>(
-        `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${JiraFlowService.baseFields}&expand=changelog&startAt=${startAt}&maxResults=${JiraFlowService.maxResults}`
+        `/rest/agile/1.0/board/${boardId}/issue?jql=${jql}&fields=${fields}&expand=changelog&startAt=${startAt}&maxResults=${JiraFlowService.maxResults}`
       );
 
       issues.push(...response.issues);

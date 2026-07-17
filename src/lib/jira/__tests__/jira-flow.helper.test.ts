@@ -4,7 +4,10 @@ import {
   getFirstDoneDate,
   calculateLeadTime,
   isActiveIssue,
-  calculatePercentile
+  calculatePercentile,
+  isAiDevIssue,
+  calculateApprovalWait,
+  buildFlowStats
 } from "@/lib/jira/jira-flow.helper";
 import type { JiraIssue } from "@/types/jira";
 
@@ -214,6 +217,111 @@ describe("jira-flow.helper", () => {
     it("handles single-element array", () => {
       expect(calculatePercentile([42], 50)).toBe(42);
       expect(calculatePercentile([42], 90)).toBe(42);
+    });
+  });
+
+  describe("isAiDevIssue", () => {
+    const devFlowFieldId = "customfield_10414";
+
+    it("returns true when Fluxo Dev is 'Dev IA' (option object)", () => {
+      const issue = makeIssue({
+        fields: { ...defaultFields, [devFlowFieldId]: { value: "Dev IA" } } as JiraIssue["fields"]
+      });
+
+      expect(isAiDevIssue(issue, devFlowFieldId)).toBe(true);
+    });
+
+    it("returns true when Fluxo Dev is a plain string 'Dev IA'", () => {
+      const issue = makeIssue({
+        fields: { ...defaultFields, [devFlowFieldId]: "dev ia" } as JiraIssue["fields"]
+      });
+
+      expect(isAiDevIssue(issue, devFlowFieldId)).toBe(true);
+    });
+
+    it("returns false when Fluxo Dev is a human value", () => {
+      const issue = makeIssue({
+        fields: { ...defaultFields, [devFlowFieldId]: { value: "Dev Humano" } } as JiraIssue["fields"]
+      });
+
+      expect(isAiDevIssue(issue, devFlowFieldId)).toBe(false);
+    });
+
+    it("returns false when the field is absent", () => {
+      const issue = makeIssue();
+
+      expect(isAiDevIssue(issue, devFlowFieldId)).toBe(false);
+    });
+
+    it("returns false when no field id is provided", () => {
+      const issue = makeIssue({
+        fields: { ...defaultFields, [devFlowFieldId]: { value: "Dev IA" } } as JiraIssue["fields"]
+      });
+
+      expect(isAiDevIssue(issue, undefined)).toBe(false);
+    });
+  });
+
+  describe("calculateApprovalWait", () => {
+    it("calculates the wait between entering and leaving Aprovação", () => {
+      const issue = makeIssue({
+        changelog: {
+          histories: [
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Aprovação" }] },
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "Aprovação", toString: "Em andamento" }] }
+          ]
+        }
+      });
+
+      expect(calculateApprovalWait(issue)).toBe(2);
+    });
+
+    it("measures until now when the card is still in Aprovação", () => {
+      const issue = makeIssue({
+        fields: { ...defaultFields, status: { name: "Aprovação" } },
+        changelog: {
+          histories: [
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Aprovação" }] }
+          ]
+        }
+      });
+
+      expect(calculateApprovalWait(issue)).toBeGreaterThan(0);
+    });
+
+    it("returns null when the card never entered Aprovação", () => {
+      const issue = makeIssue({
+        changelog: {
+          histories: [
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Em andamento" }] }
+          ]
+        }
+      });
+
+      expect(calculateApprovalWait(issue)).toBeNull();
+    });
+  });
+
+  describe("buildFlowStats", () => {
+    it("returns null for an empty list", () => {
+      expect(buildFlowStats([])).toBeNull();
+    });
+
+    it("builds average and percentiles from the values", () => {
+      expect(buildFlowStats([1, 2, 3, 4, 5])).toEqual({
+        average: 3,
+        p50: 3,
+        p75: 4,
+        p90: 5,
+        totalIssues: 5
+      });
+    });
+
+    it("does not mutate the input array", () => {
+      const values = [5, 1, 3];
+      buildFlowStats(values);
+
+      expect(values).toEqual([5, 1, 3]);
     });
   });
 });

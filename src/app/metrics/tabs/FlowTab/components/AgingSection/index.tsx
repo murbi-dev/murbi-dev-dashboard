@@ -1,6 +1,7 @@
 import { Clock, Hourglass, TrendingDown } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { TooltipContent } from "@/app/metrics/tabs/FlowTab/components/TooltipContent";
+import { ByFlowComparison } from "@/app/metrics/tabs/FlowTab/components/ByFlowComparison";
 import { CriticalIssuesSection } from "@/app/metrics/tabs/FlowTab/components/CriticalIssuesSection";
 import type { FlowMetricsPayload } from "@/types/flow";
 
@@ -13,7 +14,13 @@ function formatDays(value: number): string {
   return `${formatNumber(value)} dias`;
 }
 
-export function AgingSection({ data }: { data: NonNullable<FlowMetricsPayload["aging"]> }) {
+export function AgingSection({
+  data,
+  byFlow
+}: {
+  data: NonNullable<FlowMetricsPayload["aging"]>;
+  byFlow: FlowMetricsPayload["agingByFlow"];
+}) {
   return (
     <section>
       <div className="mb-3 flex items-center gap-2">
@@ -66,6 +73,8 @@ export function AgingSection({ data }: { data: NonNullable<FlowMetricsPayload["a
           </CardContent>
         </Card>
       </div>
+
+      <ByFlowComparison label="Aging por fluxo" data={byFlow} />
 
       <CriticalIssuesSection issues={data.criticalIssues} />
     </section>

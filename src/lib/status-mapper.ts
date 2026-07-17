@@ -14,6 +14,7 @@ export const BUSINESS_STATUSES: BusinessStatus[] = [
  */
 export const JIRA_STATUS = {
   PENDING: "Tarefas pendentes",
+  APPROVAL: "Aprovação",
   IN_PROGRESS: "Em andamento",
   PULL_REQUEST: "Pull request",
   READY_FOR_QA: "Pronto para QA",
@@ -26,7 +27,7 @@ export type JiraStatus = (typeof JIRA_STATUS)[keyof typeof JIRA_STATUS];
 
 export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
   Waiting: [JIRA_STATUS.PENDING],
-  "In Development": [JIRA_STATUS.IN_PROGRESS, JIRA_STATUS.PULL_REQUEST, JIRA_STATUS.READY_FOR_QA],
+  "In Development": [JIRA_STATUS.IN_PROGRESS, JIRA_STATUS.APPROVAL, JIRA_STATUS.PULL_REQUEST, JIRA_STATUS.READY_FOR_QA],
   Validation: [JIRA_STATUS.QA_TESTING],
   Finalizing: [JIRA_STATUS.READY_FOR_PROD],
   Done: [JIRA_STATUS.DONE]

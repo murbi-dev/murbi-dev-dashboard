@@ -61,7 +61,8 @@
  */
 
 import type { JiraIssue } from "@/types/jira";
-import { STATUS_MAPPING } from "@/lib/status-mapper";
+import type { FlowStats } from "@/types/flow";
+import { JIRA_STATUS, STATUS_MAPPING } from "@/lib/status-mapper";
 
 /**
  * Normalised display names for the "In Progress" (start of work) status.
@@ -84,6 +85,19 @@ const DONE_ENTRY_NAMES = new Set([
   ...STATUS_MAPPING["Done"].map((s) => s.toLowerCase()),
   "done"
 ]);
+
+/**
+ * Normalised display name for the "Aprovação" (AI PRD gate) status. This gate
+ * is exclusive to the AI flow (`Fluxo Dev = Dev IA`). No dashboard column of
+ * its own — cards in "Aprovação" show under "Em Desenvolvimento" — but the
+ * approval-wait metric still tracks it by its Jira status name.
+ */
+const APPROVAL_ENTRY_NAMES = new Set([JIRA_STATUS.APPROVAL.toLowerCase()]);
+
+/**
+ * Normalised value of the `Fluxo Dev` field that flags an AI-driven card.
+ */
+const AI_DEV_FLOW_VALUE = "dev ia";
 
 /**
  * Normalises a Jira status name for case-insensitive comparison.
@@ -246,6 +260,76 @@ export function calculatePercentile(sortedValues: number[], percentile: number):
   const index = Math.ceil((percentile / 100) * sortedValues.length) - 1;
 
   return sortedValues[Math.max(0, index)];
+}
+
+/**
+ * Returns `true` if the card is AI-driven (`Fluxo Dev = Dev IA`). Reads the
+ * dynamically-resolved dev-flow field id; without it, defaults to `false`.
+ */
+export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean {
+  if (!devFlowFieldId) return false;
+
+  const raw = (issue.fields as Record<string, unknown>)[devFlowFieldId];
+  const value =
+    typeof raw === "string"
+      ? raw
+      : raw && typeof raw === "object" && "value" in raw
+        ? (raw as { value?: unknown }).value
+        : undefined;
+
+  return typeof value === "string" && value.trim().toLowerCase() === AI_DEV_FLOW_VALUE;
+}
+
+/**
+ * Calculates how long a card waited in the "Aprovação" gate (PRD approval).
+ *
+ * Uses the **first** entry into "Aprovação" and the first exit out of it. If
+ * the card is still sitting in "Aprovação", measures until now.
+ *
+ * @returns Calendar days (rounded to 1 decimal), or `null` if the card never
+ *   entered the approval gate.
+ */
+export function calculateApprovalWait(issue: JiraIssue): number | null {
+  const history = getStatusHistory(issue);
+  let entryMs: number | null = null;
+
+  for (const event of history) {
+    if (entryMs === null && APPROVAL_ENTRY_NAMES.has(normalize(event.toStatus))) {
+      entryMs = new Date(event.changedAt).getTime();
+      continue;
+    }
+
+    if (entryMs !== null && APPROVAL_ENTRY_NAMES.has(normalize(event.fromStatus))) {
+      const exitMs = new Date(event.changedAt).getTime();
+      const days = (exitMs - entryMs) / (1000 * 60 * 60 * 24);
+      return days >= 0 ? roundTo1(days) : null;
+    }
+  }
+
+  if (entryMs !== null && APPROVAL_ENTRY_NAMES.has(normalize(issue.fields.status.name))) {
+    return roundTo1((Date.now() - entryMs) / (1000 * 60 * 60 * 24));
+  }
+
+  return null;
+}
+
+/**
+ * Builds the standard flow statistics (average + percentiles) from a list of
+ * day values. Returns `null` when there is no data.
+ */
+export function buildFlowStats(values: number[]): FlowStats {
+  if (values.length === 0) return null;
+
+  const sorted = [...values].sort((a, b) => a - b);
+  const sum = sorted.reduce((acc, v) => acc + v, 0);
+
+  return {
+    average: roundTo1(sum / sorted.length),
+    p50: calculatePercentile(sorted, 50),
+    p75: calculatePercentile(sorted, 75),
+    p90: calculatePercentile(sorted, 90),
+    totalIssues: sorted.length
+  };
 }
 
 function roundTo1(value: number): number {
