@@ -38,7 +38,12 @@ __tests__                testes unitários colocalizados por escopo
 | `src/services/jira/jira-issue-normalizer.service.ts` | Jira issue -> `DashboardIssue` |
 | `src/services/jira/quality.service.ts` | service de métricas de qualidade (Delivery Quality Rate) |
 | `src/lib/jira/jira-metrics.helper.ts` | helper compartilhado de rejeição QA |
+| `src/lib/jira/jira-series.helper.ts` | séries temporais das métricas de qualidade e fluxo |
+| `src/lib/date-buckets.ts` | bucketing diário/semanal/mensal em UTC |
+| `src/components/ui/LineChart/index.tsx` | gráfico de linhas em SVG, sem biblioteca de charts |
+| `src/app/metrics/components/MetricsTrendSection/index.tsx` | seção de evolução compartilhada por Quality e Flow |
 | `src/types/quality.ts` | tipos do payload de métricas de qualidade |
+| `src/types/metrics-series.ts` | tipos comuns das séries temporais |
 | `src/clients/jira/jira.client.ts` | client HTTP do Jira |
 | `src/lib/status-mapper.ts` | status Jira -> status de negócio |
 | `src/lib/display.ts` | labels pt-BR para UI |

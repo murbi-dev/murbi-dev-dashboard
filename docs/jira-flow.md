@@ -248,6 +248,34 @@ issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND
 
 Novas métricas de qualidade (Rework Rate, Defect Rate, Hotfix Rate etc.) devem ser adicionadas em `JiraQualityService` e expostas no mesmo payload ou em novos campos do payload existente.
 
+## Séries Temporais Das Métricas
+
+Os payloads de `/api/metrics/quality` e `/api/metrics/flow` trazem um campo `series` com a evolução dos mesmos indicadores dentro do período filtrado. É o que alimenta a seção «Evolução no período» das duas abas.
+
+Helper: `src/lib/jira/jira-series.helper.ts`, sobre o bucketing puro de `src/lib/date-buckets.ts`.
+
+### Decisões
+
+- **As três granularidades vêm na mesma resposta** (`series.daily`, `series.weekly`, `series.monthly`). Não existe parâmetro de granularidade na API: trocar a granularidade na tela não pode custar outra ida ao Jira, e um P50 semanal não se reagrega a partir dos P50 diários — precisa dos valores crus, que só existem no servidor.
+- **Custo zero de rede.** A série é montada a partir das issues que o service já buscou para os números principais.
+- **Cada indicador é datado pelo evento que o produz**, sempre sobre o mesmo conjunto de issues do card principal, para o gráfico decompor o número acima dele:
+
+  | Indicador | Datado por |
+  |---|---|
+  | Entregas, retrabalho, QA rejections, Delivery Quality Rate | transição para `Concluído` |
+  | Lead Time (total, P50, IA, Humano) e entregas concluídas | transição para `Concluído` |
+  | Tempo de Aprovação (IA) | **primeira** entrada no gate de aprovação |
+  | Aging | primeira entrada em `Em andamento` |
+
+- Card reaberto e reentregue é datado pela transição para `Concluído` **dentro do período**, com fallback para a primeira de todas.
+- Bucket sem dado é `null`, nunca zero — a diferença entre "não entregamos nada" e "entregamos com 0% de qualidade" importa. Na tela o `null` não vira ponto no eixo: a linha liga as medições vizinhas e marca cada medição real (ver `docs/frontend.md`).
+- Semanas começam na segunda-feira (ISO) e são recortadas pelo período: a primeira e a última podem ser parciais. Meses são meses de calendário, também recortados. Tudo em UTC, porque ancorar no fuso do servidor mudaria a entrega de bucket conforme onde a app roda.
+
+### Limitações
+
+- Issue com changelog truncado pelo Jira não tem transição datada: entra no número principal e fica de fora da série.
+- Aging é medido contra *agora*, como no card principal. O bucket diz "que idade têm hoje os cards iniciados naquele período", não a idade do WIP na época.
+
 ## Fluxo (Flow Metrics)
 
 Endpoint: `GET /api/metrics/flow?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&hotfixOnly=true`

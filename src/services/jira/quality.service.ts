@@ -39,17 +39,26 @@
  *   instance uses a different system name for the Done status, adjust
  *   the JQL accordingly.
  *
+ * ## Time series
+ *
+ * The payload also carries `series`, the evolution of the same indicators
+ * inside the range, bucketed by the delivery date at daily, weekly and monthly
+ * granularity. It is built from the issues already fetched here, so it costs no
+ * extra Jira round-trip — see `src/lib/jira/jira-series.helper.ts`.
+ *
  * ### Dependencies
  *
  * - Jira REST API with `expand=changelog`
  * - Jira credentials via `JiraConfigProvider`
  * - Shared helper `src/lib/jira/jira-metrics.helper.ts`
+ * - Series helper `src/lib/jira/jira-series.helper.ts`
  */
 
 import { JIRA_STATUS_ID } from "@/lib/status-mapper";
 import { jiraConfigProvider, JiraConfigProvider } from "@/lib/jira/jira-config.provider";
 import { JiraClient } from "@/clients/jira/jira.client";
 import { getQaRejectionCount, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
+import { buildQualitySeries } from "@/lib/jira/jira-series.helper";
 import type { QualityMetricsPayload, QualityReworkDelivery } from "@/types/quality";
 import type { JiraConfig, JiraSearchResponse } from "@/types/jira";
 
@@ -123,7 +132,8 @@ export class JiraQualityService {
         deliveriesWithoutRework,
         totalQaRejections,
         qualityRate,
-        reworkDeliveries
+        reworkDeliveries,
+        series: buildQualitySeries(issues, startDate, endDate)
       };
     } catch (error) {
       console.error("Error fetching quality metrics:", error);

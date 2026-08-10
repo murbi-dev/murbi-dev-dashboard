@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { QualitySkeleton } from "./components/QualitySkeleton";
 import { TooltipContent } from "./components/TooltipContent";
 import { ReworkDeliveriesTable } from "./components/ReworkDeliveriesTable";
+import { QualityTrendSection } from "./components/QualityTrendSection";
 import type { QualityMetricsPayload } from "@/types/quality";
 
 function todayISO(): string {
@@ -306,6 +307,8 @@ export function QualityTab() {
             withoutRework={data.deliveriesWithoutRework}
             total={data.totalDeliveries}
           />
+
+          <QualityTrendSection series={data.series} />
 
           <ReworkDeliveriesTable deliveries={data.reworkDeliveries} />
         </>

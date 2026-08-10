@@ -14,6 +14,7 @@ export function QualitySkeleton() {
         <Skeleton className="md:col-span-2 h-32" />
       </div>
       <Skeleton className="h-28" />
+      <Skeleton className="h-[34rem]" />
       <Skeleton className="h-48" />
     </div>
   );

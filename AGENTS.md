@@ -16,9 +16,13 @@ Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arq
 - **`Aprovação Pendente`** (multiselect `Negócio`/`Dev`) vira badge no card em aprovação; vazio no gate significa que a bola é da IA e mostra `Aguardando IA`.
 - Status do Jira **sem mapeamento não é mais descartado**: cai em `Waiting`, marca `isUnknownStatus` e gera faixa de aviso no painel. Renomear status no Jira sem atualizar `STATUS_MAPPING` esvaziava a coluna em silêncio.
 - Tela `/metrics` possui abas `Overview` (resumo operacional em tempo real com cards de Cards Ativos, Concluídos, Responsáveis e HOTFIX), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate com filtro de período e opção Apenas HOTFIX) e `Flow` (Lead Time, Aging e Tempo de Aprovação (IA), com filtro de período e opção Apenas HOTFIX).
+- `Quality` e `Flow` terminam com a seção **Evolução no período**: gráfico de linhas com seleção de indicadores e granularidade (diária, semanal ou mensal). A granularidade é só do gráfico e **não refaz a busca no Jira** — a API manda as três séries prontas na mesma resposta, porque P50 não se reagrega a partir de P50 diário. Série é montada em `src/lib/jira/jira-series.helper.ts` a partir das issues já buscadas, sem chamada extra.
+- **Um gráfico por unidade.** Indicadores em `%`, `dias` e `cards` nunca dividem o mesmo desenho: dois eixos Y no mesmo plot inventam correlação que não existe. Bucket sem dado é `null` e nunca vira zero — no gráfico a linha liga as medições vizinhas e marca cada medição real, porque quebrar o traço em cada lacuna picotava o diário em cacos.
+- A paleta categórica dos gráficos vive em `globals.css` (`--chart-1` a `--chart-7`, com passo próprio no tema escuro). **A ordem dos slots é o mecanismo de segurança para daltonismo** e foi validada par a par contra as superfícies clara e escura — reordenar ou trocar cor exige revalidar.
 - Métricas de fluxo distinguem IA × Humano: Lead Time e Aging têm versão segmentada (`leadTimeByFlow`/`agingByFlow`) e há a métrica dedicada **Tempo de Aprovação (IA)** (espera no gate `Aprovação` do PRD, exclusiva do fluxo `Dev IA`). Tudo o que é de IA usa cor violeta + ícone `Sparkles`.
 - Lógica de rejeição QA centralizada em `src/lib/jira/jira-metrics.helper.ts` — usada tanto pelo dashboard quanto pelas métricas de qualidade.
-- Lógica de fluxo (Lead Time, Aging, Tempo de Aprovação, segmentação IA × Humano) centralizada em `src/lib/jira/jira-flow.helper.ts` — usada pelo serviço de flow.
+- Lógica de fluxo (Lead Time, Aging, Tempo de Aprovação, segmentação IA × Humano) centralizada em `src/lib/jira/jira-flow.helper.ts` — usada pelo serviço de flow e, pelo `getStatusHistory` exportado dali, também pelas séries temporais.
+- Séries temporais das duas abas centralizadas em `src/lib/jira/jira-series.helper.ts`, sobre o bucketing puro de `src/lib/date-buckets.ts` (UTC, semana começando na segunda).
 - Interface visível deve ficar em **português do Brasil**.
 - Código, tipos, funções, arquivos e valores internos ficam em **inglês**.
 
@@ -59,8 +63,10 @@ Obrigatório:
 - manter código interno em inglês e UI em pt-BR;
 - manter Jira server-side;
 - manter `/api/dashboard` como contrato do frontend;
-- manter `/api/metrics/quality` como contrato da aba Quality;
-- manter `/api/metrics/flow` como contrato da aba Flow;
+- manter `/api/metrics/quality` como contrato da aba Quality, incluindo o campo `series`;
+- manter `/api/metrics/flow` como contrato da aba Flow, incluindo o campo `series`;
+- manter as três granularidades na mesma resposta, sem parâmetro de granularidade na API;
+- revalidar a paleta dos gráficos ao mexer em `--chart-*`;
 - manter services como classes em arquivos `*.service.ts`;
 - manter clients externos em `src/clients`, não em `src/services`;
 - manter componentes específicos dentro de `src/app/**/components` e componentes genéricos em `src/components`;
@@ -81,5 +87,6 @@ Evitar:
 - criar camadas inexistentes sem motivo;
 - duplicar labels de status fora de `display.ts`;
 - mudar status mapping sem consultar dados reais;
-- adicionar dependência pesada para problema simples;
+- adicionar dependência pesada para problema simples (os gráficos são SVG próprio em `src/components/ui/LineChart`, sem biblioteca de charts);
+- colocar indicadores de unidades diferentes no mesmo gráfico ou criar segundo eixo Y;
 - transformar dashboard em sistema CRUD.

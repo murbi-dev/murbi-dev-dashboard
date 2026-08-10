@@ -85,8 +85,12 @@ const AI_DEV_FLOW_VALUE = "dev ia";
 
 /**
  * Extracts all status-change events from the changelog, sorted oldest first.
+ *
+ * This is the single reader of the status changelog: the flow metrics, the
+ * approval gate and the metrics time series all go through it, so the
+ * "compare ids, never names" rule lives in one place.
  */
-function getStatusHistory(issue: JiraIssue): Array<{
+export function getStatusHistory(issue: JiraIssue): Array<{
   fromId: string;
   toId: string;
   changedAt: string;
@@ -144,6 +148,27 @@ export function getFirstDoneDate(issue: JiraIssue): string | null {
 
   for (const event of history) {
     if (DONE_ENTRY_IDS.has(event.toId)) {
+      return event.changedAt;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Returns the date of the **first** time this issue entered the approval gate.
+ *
+ * Used to place the "Tempo de Aprovação (IA)" of a card in a time bucket: the
+ * wait itself is a sum of several stays, so the moment the card first asked for
+ * approval is what dates it.
+ *
+ * @returns ISO date string, or `null` if the card never entered the gate.
+ */
+export function getFirstApprovalDate(issue: JiraIssue): string | null {
+  const history = getStatusHistory(issue);
+
+  for (const event of history) {
+    if (APPROVAL_ENTRY_IDS.has(event.toId)) {
       return event.changedAt;
     }
   }

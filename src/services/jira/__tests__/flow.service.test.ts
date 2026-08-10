@@ -128,6 +128,41 @@ describe("JiraFlowService", () => {
     expect(result.leadTime!.p90).toBe(4);
   });
 
+  it("returns the time series at the three granularities, bucketed by the delivery date", async () => {
+    const service = new JiraFlowService(
+      { getConfig: () => jiraConfig },
+      () =>
+        ({
+          get: async <T>(path: string): Promise<T> => {
+            if (decodeURIComponent(path).includes("status = 10012")) {
+              return {
+                startAt: 0,
+                maxResults: 100,
+                total: 2,
+                isLast: true,
+                issues: [
+                  doneIssue("MUR-1", "2026-01-01T10:00:00.000Z", "2026-01-03T10:00:00.000Z"),
+                  doneIssue("MUR-2", "2026-01-01T10:00:00.000Z", "2026-01-05T10:00:00.000Z")
+                ]
+              } as T;
+            }
+
+            return { startAt: 0, maxResults: 100, total: 0, isLast: true, issues: [] } as T;
+          }
+        }) as unknown as JiraClient,
+      fieldMetadataStub()
+    );
+
+    const result = await service.getFlowMetrics("2026-01-01", "2026-01-05");
+
+    expect(result.series.daily).toHaveLength(5);
+    expect(result.series.daily[2]).toMatchObject({ leadTimeAverage: 2, deliveries: 1 });
+    expect(result.series.daily[4]).toMatchObject({ leadTimeAverage: 4, deliveries: 1 });
+    expect(result.series.daily[0].leadTimeAverage).toBeNull();
+    expect(result.series.monthly).toHaveLength(1);
+    expect(result.series.monthly[0].leadTimeAverage).toBe(result.leadTime!.average);
+  });
+
   it("computes aging metrics from active issues", async () => {
     const service = new JiraFlowService(
       { getConfig: () => jiraConfig },

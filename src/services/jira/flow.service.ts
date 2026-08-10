@@ -35,11 +35,22 @@
  * - Calendar days are used, not business hours.
  * - Re-openings are ignored — always uses the first occurrence of each status.
  *
+ * ## Time series
+ *
+ * The payload also carries `series`, the evolution of the same indicators
+ * inside the range at daily, weekly and monthly granularity. Each indicator is
+ * bucketed by the date that dates it — the delivery for Lead Time, the first
+ * entry into the approval gate for Tempo de Aprovação, the first entry into In
+ * Progress for Aging — and uses the same issue set as its headline card. It is
+ * built from the issues already fetched here, so it costs no extra Jira
+ * round-trip. See `src/lib/jira/jira-series.helper.ts`.
+ *
  * ## Dependencies
  *
  * - Jira REST API with `expand=changelog`
  * - Jira credentials via `JiraConfigProvider`
  * - Shared helper `src/lib/jira/jira-flow.helper.ts`
+ * - Series helper `src/lib/jira/jira-series.helper.ts`
  */
 
 import { JIRA_STATUS_ID } from "@/lib/status-mapper";
@@ -55,6 +66,7 @@ import {
   buildFlowStats
 } from "@/lib/jira/jira-flow.helper";
 import { isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
+import { buildFlowSeries } from "@/lib/jira/jira-series.helper";
 import { jiraFieldMetadataCacheService, JiraFieldMetadataCacheService } from "./field-metadata-cache.service";
 import type { FlowByDevType, FlowMetricsPayload, FlowStats, AgingIssue } from "@/types/flow";
 import type { JiraConfig, JiraIssue, JiraSearchResponse } from "@/types/jira";
@@ -111,7 +123,15 @@ export class JiraFlowService {
         leadTimeByFlow: this.computeStatsByFlow(doneIssues, devFlowFieldId, calculateLeadTime),
         aging: this.computeAging(activeInPeriod, devFlowFieldId),
         agingByFlow: this.computeStatsByFlow(activeInPeriod, devFlowFieldId, calculateAging),
-        approvalWait: this.computeApprovalWait([...doneIssues, ...activeIssues])
+        approvalWait: this.computeApprovalWait([...doneIssues, ...activeIssues]),
+        series: buildFlowSeries({
+          doneIssues,
+          approvalIssues: [...doneIssues, ...activeIssues],
+          agingIssues: activeInPeriod,
+          devFlowFieldId,
+          startDate,
+          endDate
+        })
       };
     } catch (error) {
       console.error("Error fetching flow metrics:", error);

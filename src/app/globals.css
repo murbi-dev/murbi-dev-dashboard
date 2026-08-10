@@ -22,6 +22,20 @@
     --input: 214 24% 88%;
     --ring: 214 84% 30%;
     --radius: 0.5rem;
+
+    /**
+     * Categorical palette dos gráficos. A ordem dos slots é o mecanismo de
+     * segurança para daltonismo — foi validada par a par (ΔE CVD >= 8) contra
+     * as superfícies claras e escuras de `--card`. Não reordenar nem inserir
+     * cor nova sem revalidar.
+     */
+    --chart-1: #2a78d6;
+    --chart-2: #eb6834;
+    --chart-3: #4a3aa7;
+    --chart-4: #1baf7a;
+    --chart-5: #eda100;
+    --chart-6: #e87ba4;
+    --chart-7: #008300;
   }
 
   .dark {
@@ -42,6 +56,15 @@
     --border: 218 18% 16%;
     --input: 218 18% 18%;
     --ring: 199 88% 62%;
+
+    /** Mesmas sete matizes, com o passo escolhido para a superfície escura. */
+    --chart-1: #3987e5;
+    --chart-2: #d95926;
+    --chart-3: #9085e9;
+    --chart-4: #199e70;
+    --chart-5: #c98500;
+    --chart-6: #d55181;
+    --chart-7: #008300;
   }
 
   * {

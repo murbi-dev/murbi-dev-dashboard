@@ -1,3 +1,5 @@
+import type { SeriesBucket, SeriesByGranularity } from "@/types/metrics-series";
+
 export type FlowStats = {
   average: number;
   p50: number;
@@ -37,6 +39,22 @@ export type FlowMetricsPayload = {
    * inherently AI-only.
    */
   approvalWait: FlowStats;
+  /** Evolution of the indicators inside the range, at every granularity. */
+  series: SeriesByGranularity<FlowSeriesPoint>;
+};
+
+/**
+ * One time bucket of the Flow series. Every value is `null` when the bucket has
+ * no card feeding that indicator — a gap in the line, never a zero.
+ */
+export type FlowSeriesPoint = SeriesBucket & {
+  leadTimeAverage: number | null;
+  leadTimeP50: number | null;
+  leadTimeAiAverage: number | null;
+  leadTimeHumanAverage: number | null;
+  approvalWaitAverage: number | null;
+  agingAverage: number | null;
+  deliveries: number;
 };
 
 export type AgingIssue = {

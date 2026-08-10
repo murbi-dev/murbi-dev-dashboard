@@ -10,6 +10,7 @@ import { FlowSkeleton } from "./components/FlowSkeleton";
 import { LeadTimeSection } from "./components/LeadTimeSection";
 import { ApprovalWaitSection } from "./components/ApprovalWaitSection";
 import { AgingSection } from "./components/AgingSection";
+import { FlowTrendSection } from "./components/FlowTrendSection";
 import type { FlowMetricsPayload } from "@/types/flow";
 
 function todayISO(): string {
@@ -172,6 +173,8 @@ export function FlowTab() {
               </CardContent>
             </Card>
           )}
+
+          <FlowTrendSection series={data.series} />
         </>
       ) : null}
     </div>

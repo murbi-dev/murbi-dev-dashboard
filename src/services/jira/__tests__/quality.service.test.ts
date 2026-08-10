@@ -250,6 +250,54 @@ describe("JiraQualityService", () => {
     expect(result.reworkDeliveries[0].key).toBe("MUR-2");
   });
 
+  it("returns the time series at the three granularities, bucketed by the delivery date", async () => {
+    const doneTransition = (at: string) => ({
+      histories: [
+        {
+          created: at,
+          items: [
+            {
+              field: "status",
+              from: "10158",
+              to: "10012",
+              fromString: "Teste QA",
+              toString: "Concluído"
+            }
+          ]
+        }
+      ]
+    });
+
+    const issues = [
+      makeIssue("MUR-1", {}, doneTransition("2026-01-02T10:00:00.000Z")),
+      makeIssue("MUR-2", {}, doneTransition("2026-01-02T16:00:00.000Z")),
+      makeIssue("MUR-3", {}, doneTransition("2026-01-05T10:00:00.000Z"))
+    ];
+
+    const service = new JiraQualityService(
+      { getConfig: () => jiraConfig },
+      () =>
+        ({
+          get: async <T>(): Promise<T> => ({
+            startAt: 0,
+            maxResults: 100,
+            total: issues.length,
+            isLast: true,
+            issues
+          }) as T
+        }) as unknown as JiraClient
+    );
+
+    const result = await service.getQualityMetrics("2026-01-01", "2026-01-05");
+
+    expect(result.series.daily).toHaveLength(5);
+    expect(result.series.daily[1].totalDeliveries).toBe(2);
+    expect(result.series.daily[4].totalDeliveries).toBe(1);
+    expect(result.series.daily[0].qualityRate).toBeNull();
+    expect(result.series.monthly).toHaveLength(1);
+    expect(result.series.monthly[0].totalDeliveries).toBe(result.totalDeliveries);
+  });
+
   it("handles missing assignee gracefully", async () => {
     const issues = [
       makeIssue("MUR-1", { assignee: undefined }, qaRejectionHistory())

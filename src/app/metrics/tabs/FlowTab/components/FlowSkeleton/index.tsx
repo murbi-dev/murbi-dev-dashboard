@@ -20,6 +20,10 @@ export function FlowSkeleton() {
         </div>
       </div>
       <Skeleton className="h-48 w-full" />
+      <div>
+        <Skeleton className="mb-3 h-5 w-40" />
+        <Skeleton className="h-[34rem] w-full" />
+      </div>
     </div>
   );
 }
