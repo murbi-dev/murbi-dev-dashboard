@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search, Sparkles } from "lucide-react";
+import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search, Sparkles, Stamp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -28,7 +28,8 @@ const defaultFilters: DashboardFilters = {
   hotfixOnly: false,
   aiDevOnly: false,
   assignee: "all",
-  priority: "all"
+  priority: "all",
+  track: "all"
 };
 
 const defaultStatusFilters = BUSINESS_STATUSES.reduce(
@@ -97,8 +98,9 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         const matchesAiDev = !filters.aiDevOnly || issue.isAiDev;
         const matchesAssignee = filters.assignee === "all" || issue.assignee.name === filters.assignee;
         const matchesPriority = filters.priority === "all" || issue.priority === filters.priority;
+        const matchesTrack = filters.track === "all" || issue.track === filters.track;
 
-        return matchesQuery && matchesHotfix && matchesAiDev && matchesAssignee && matchesPriority;
+        return matchesQuery && matchesHotfix && matchesAiDev && matchesAssignee && matchesPriority && matchesTrack;
       })
     );
   }, [filters, issues]);
@@ -120,15 +122,22 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
       BUSINESS_STATUSES.reduce(
         (acc, status) => {
           acc[status] = Array.from(
-            groupedBeforeStatusFilter[status].reduce((counts, issue) => {
-              counts.set(issue.jiraStatus, (counts.get(issue.jiraStatus) ?? 0) + 1);
-              return counts;
-            }, new Map<string, number>())
-          ).sort(([statusA], [statusB]) => statusA.localeCompare(statusB, "pt-BR"));
+            groupedBeforeStatusFilter[status]
+              .reduce((counts, issue) => {
+                const atual = counts.get(issue.jiraStatusId);
+                counts.set(issue.jiraStatusId, {
+                  id: issue.jiraStatusId,
+                  name: issue.jiraStatus,
+                  count: (atual?.count ?? 0) + 1
+                });
+                return counts;
+              }, new Map<string, { id: string; name: string; count: number }>())
+              .values()
+          ).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 
           return acc;
         },
-        {} as Record<BusinessStatus, Array<[string, number]>>
+        {} as Record<BusinessStatus, Array<{ id: string; name: string; count: number }>>
       ),
     [groupedBeforeStatusFilter]
   );
@@ -141,7 +150,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           acc[status] =
             selectedJiraStatus === "all"
               ? groupedBeforeStatusFilter[status]
-              : groupedBeforeStatusFilter[status].filter((issue) => issue.jiraStatus === selectedJiraStatus);
+              : groupedBeforeStatusFilter[status].filter((issue) => issue.jiraStatusId === selectedJiraStatus);
           return acc;
         },
         {} as Record<BusinessStatus, DashboardIssue[]>
@@ -152,10 +161,15 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
     () => BUSINESS_STATUSES.flatMap((status) => grouped[status]),
     [grouped]
   );
+  const unknownStatuses = useMemo(
+    () => Array.from(new Set(issues.filter((issue) => issue.isUnknownStatus).map((issue) => issue.jiraStatus))).sort(),
+    [issues]
+  );
   const stats = {
     total: issues.length,
     hotfixes: issues.filter((issue) => issue.isHotfix).length,
     pendingHotfixes: issues.filter((issue) => issue.isHotfix && issue.businessStatus !== "Done").length,
+    approval: issues.filter((issue) => issue.businessStatus === "Approval").length,
     development: issues.filter((issue) => issue.businessStatus === "In Development").length,
     validation: issues.filter((issue) => issue.businessStatus === "Validation").length,
     done: issues.filter((issue) => issue.businessStatus === "Done").length
@@ -243,9 +257,18 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           </div>
         ) : null}
 
-        <section className={cn("grid gap-1.5", mode === "tv" ? "grid-cols-5" : "grid-cols-2 lg:grid-cols-5")}>
+        {unknownStatuses.length > 0 ? (
+          <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+            Status do Jira sem mapeamento, exibidos em <strong>Pendente</strong>:{" "}
+            <strong>{unknownStatuses.join(", ")}</strong>. Alguém renomeou ou criou status no Jira sem atualizar o
+            painel.
+          </div>
+        ) : null}
+
+        <section className={cn("grid gap-1.5", mode === "tv" ? "grid-cols-6" : "grid-cols-2 lg:grid-cols-6")}>
           <SummaryCard icon={Activity} label="Cards no fluxo" value={stats.total} mode={mode} />
           <SummaryCard icon={Flame} label="Hotfixes" value={`${stats.pendingHotfixes}/${stats.hotfixes}`} tone="hotfix" mode={mode} />
+          <SummaryCard icon={Stamp} label="Em Aprovação" value={stats.approval} mode={mode} />
           <SummaryCard icon={Clock} label="Em Desenvolvimento" value={stats.development} mode={mode} />
           <SummaryCard icon={Search} label="Em Teste" value={stats.validation} mode={mode} />
           <SummaryCard icon={CheckCircle2} label="Em Produção" value={stats.done} tone="done" mode={mode} />
@@ -283,6 +306,17 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
               <Sparkles className="h-4 w-4" />
               Dev IA
             </Button>
+            <select
+              className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
+              value={filters.track}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, track: event.target.value as DashboardFilters["track"] }))
+              }
+            >
+              <option value="all">Todas as trilhas</option>
+              <option value="project">Projeto</option>
+              <option value="sustaining">Sustentação</option>
+            </select>
             <select
               className="h-9 rounded-md border border-input bg-background px-2.5 text-sm"
               value={filters.assignee}
@@ -346,8 +380,8 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
           className={cn(
             "grid gap-3",
             mode === "tv"
-              ? "grid-cols-5"
-              : "grid-flow-col auto-cols-[minmax(280px,82vw)] overflow-x-auto pb-2 xl:grid-flow-row xl:grid-cols-5 xl:overflow-visible xl:pb-0"
+              ? "grid-cols-6"
+              : "grid-flow-col auto-cols-[minmax(280px,82vw)] overflow-x-auto pb-2 xl:grid-flow-row xl:grid-cols-6 xl:overflow-visible xl:pb-0"
           )}
         >
           {BUSINESS_STATUSES.map((status) => (

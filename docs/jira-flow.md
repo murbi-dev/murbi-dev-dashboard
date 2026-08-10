@@ -89,22 +89,55 @@ Mapeamento atual:
 | Interno | Label UI | Jira |
 | --- | --- | --- |
 | `Waiting` | Pendente | `Tarefas pendentes` |
-| `In Development` | Em Desenvolvimento | `Em andamento`, `Aprovação`, `Pull request`, `Pronto para QA` |
+| `Approval` | Em Aprovação | `10224` (Aprovação) · `10227` (PRD Reprovado) |
+| `In Development` | Em Desenvolvimento | `Em andamento`, `Pull request`, `Pronto para QA` |
 | `Validation` | Em Teste | `Teste QA` |
 | `Finalizing` | Aguardando Deploy | `Pronto para PROD` |
 | `Done` | Em Produção | `Concluído`, `Concluido` |
 
-O status `Aprovação` é o gate exclusivo do fluxo de IA (`Fluxo Dev = Dev IA`), onde o card espera a aprovação humana do PRD antes do código. Ele **não tem coluna própria** no board de negócio: cai dentro de **Em Desenvolvimento** (aparece como chip `Aprovação` no filtro por status Jira da coluna). A identidade de IA continua visível pelo badge `IA` (violeta/`Sparkles`) no próprio card. Como métrica, a espera nesse gate é medida à parte — ver **Tempo de Aprovação (IA)** em Fluxo (Flow Metrics), que rastreia o status `Aprovação` pelo nome, independentemente da coluna.
+A coluna **Em Aprovação** é o gate do fluxo de IA (`Fluxo Dev = Dev IA`), onde o card espera aprovação antes do código. Ela recebe os **dois** status do gate, porque são momentos do mesmo ciclo:
+
+- `Aprovação` — esperando uma pessoa aprovar o artefato;
+- `PRD Reprovado` — o artefato foi reprovado e a bola voltou para a IA retrabalhar.
+
+⚠️ **O mapa casa por `id` de status, nunca por nome** (`JIRA_STATUS_ID` em `src/lib/status-mapper.ts`). O nome não serve de chave por dois motivos, e os dois já quebraram este board: ele é **traduzido conforme o idioma da conta** que consulta (uma conta em inglês recebe `In Progress`, uma em português recebe `Em andamento`) e **muda quando alguém renomeia** o status no workflow. O nome continua vindo no card, mas só para exibir.
+
+Vale para o **JQL também**: as buscas usam `status = 10012`, não `status = Done`. E vale para o **changelog**: o helper de fluxo lê `from`/`to` (ids), não `fromString`/`toString`.
+
+Ids confirmados em `/rest/api/3/project/MURBI/statuses`. Como transição e status têm nomes diferentes de propósito (as transições usam o vocabulário `PRD/Spec`, os status não), conferir pelo id evita confundir os dois.
+
+De quem é a bola dentro da coluna quem diz é o campo `Aprovação Pendente` (ver seção própria), não o status.
+
+> ⚠️ **Os nomes de status são configuração do Jira, e o mapa casa pelo nome exibido.** Renomear um status lá esvazia a coluna aqui, sem erro. Por isso status não mapeado passou a **aparecer com aviso** em vez de ser descartado, e por isso o gate aceita mais de uma grafia.
 
 Regras:
 
-- Status desconhecido não entra no dashboard principal; isso evita exibir status não mapeado como coluna errada.
+- Status desconhecido **entra** no dashboard, cai em `Waiting`, é marcado com `isUnknownStatus` e gera uma faixa de aviso no topo do painel mais um `console.warn` no servidor. Antes ele era descartado em silêncio, o que escondia mudança de configuração no Jira. Agora só dispara para status **novo**, já que renomear não afeta mais nada.
 - `Backlog`, épicos e subtarefas ficam fora do dashboard por JQL.
 - `JiraDashboardService` também descarta épicos e subtarefas antes de normalizar, como defesa contra mudanças na configuração do board.
 - Ao investigar cards em coluna errada, agrupe `jiraStatus -> businessStatus` da `/api/dashboard`.
 - Labels visíveis ficam em `src/lib/display.ts`.
 - Cards mostram explicitamente o `jiraStatus` real, além da coluna de negócio.
 - Colunas com múltiplos status técnicos mostram no topo o total da coluna e a contagem por `jiraStatus`; no modo standard, essa lista também filtra a própria coluna.
+
+## Trilha do card (Projeto × Sustentação)
+
+A trilha diz de onde o card veio, e é o que define quais artefatos o `dev-flow` produz para ele.
+
+- Sai do campo **`Divisão`** do **épico pai** (`Projeto` | `Sustentação`), não do card.
+- Regra: `Projeto` → `project`. **Qualquer outra coisa** — `Sustentação`, campo vazio, ou card **sem épico** → `sustaining`. É a mesma regra da skill `dev-flow`, e precisa continuar sendo, senão o board contradiz o processo.
+- O id do campo é resolvido por **nome** (`divisão`) pelo `JiraFieldMetadataMapper`, como os demais.
+- Custo zero de requisição: o `Divisão` entra na busca de épicos que o `JiraDashboardService` já fazia em lote para pegar nome e cor.
+- Aparece como badge no card (`Projeto` com ícone de pasta, `Sustentação` com boia) e como filtro no modo standard.
+
+## Aprovação Pendente
+
+Campo **multiselect** do card (`Negócio`, `Dev`), que diz quais aprovações o checkpoint atual pediu e ainda faltam.
+
+- Resolvido por nome (`aprovação pendente`); vem como **array**, por isso o normalizer tem um leitor próprio para multiselect.
+- Os badges só aparecem com o card na coluna **Em Aprovação**.
+- **Campo vazio no gate não significa "ninguém deve"**: significa que a bola está com a IA, ou porque ninguém rodou o `dev-flow` desde a última aprovação, ou porque ela está escrevendo a Spec. Nesse caso o card mostra **Aguardando IA** em violeta, o mesmo critério que a skill `ai-flow-radar` usa.
+- Quem grava é a skill; quem limpa é a post-function da transição que aprova para desenvolvimento. O dashboard só lê.
 
 ## HOTFIX
 
@@ -235,7 +268,7 @@ O service resolve dinamicamente o `devFlowFieldId` (campo `Fluxo Dev`) via `Jira
 
 - Lead Time considera tickets concluídos no período.
 - Aging considera tickets ativos no período.
-- **Tempo de Aprovação (IA)** mede quanto tempo o card ficou no gate `Aprovação` (espera pela aprovação humana do PRD): da primeira entrada em `Aprovação` até a saída — ou até agora, se ainda estiver no gate. É inerentemente **IA-only**, pois só o fluxo `Dev IA` passa por esse status (`calculateApprovalWait` em `src/lib/jira/jira-flow.helper.ts`).
+- **Tempo de Aprovação (IA)** mede quanto tempo o card esperou **por uma pessoa** no gate. Soma **todas** as estadas no status de aprovação (não só a primeira), porque hoje o card passa pelo gate mais de uma vez por desenho: sustentação aprova PRD e depois Spec, e uma reprovação manda o card para `PRD/Spec Reprovado` e de volta. O tempo no status de reprovação **não conta** — ali quem está trabalhando é a IA. Se o card ainda está no gate, a estada aberta conta até agora. É inerentemente **IA-only**, pois só o fluxo `Dev IA` passa por esse status (`calculateApprovalWait` em `src/lib/jira/jira-flow.helper.ts`).
 - **Segmentação IA × Humano:** Lead Time e Aging também são calculados separadamente para o fluxo de IA e o humano (`leadTimeByFlow` / `agingByFlow`, cada um com `ai` e `human`), usando `isAiDevIssue`. A UI mostra os dois lado a lado (IA com cor violeta + ícone `Sparkles`) e marca cada item crítico de IA com o badge `Sparkles` (`isAiDev` em `AgingIssue`).
 - `hotfixOnly=true` filtra tanto tickets concluídos quanto ativos para issues com prioridade `HOTFIX`. Como HOTFIX é fluxo humano, o Tempo de Aprovação tende a ficar vazio nesse filtro.
 

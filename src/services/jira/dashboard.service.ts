@@ -8,7 +8,7 @@ import {
   jiraFieldMetadataCacheService,
   JiraFieldMetadataCacheService
 } from "@/services/jira/field-metadata-cache.service";
-import { isMappedJiraStatus } from "@/lib/status-mapper";
+import { isMappedJiraStatus, JIRA_STATUS_ID } from "@/lib/status-mapper";
 import type { DashboardPayload } from "@/types/dashboard";
 import type { JiraBoard, JiraConfig, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraIssue, JiraSearchResponse } from "@/types/jira";
 
@@ -26,7 +26,8 @@ export class JiraDashboardService {
     "statuscategorychangedate"
   ];
   private static readonly maxResults = 100;
-  private static readonly boardJql = `status != Backlog AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO Done AFTER -14d)`;
+  /** JQL by status **id**: names are translated per account and break silently. */
+  private static readonly boardJql = `status != ${JIRA_STATUS_ID.BACKLOG} AND issuetype != Epic AND issuetype not in subTaskIssueTypes() AND (statusCategory != Done OR status CHANGED TO ${JIRA_STATUS_ID.DONE} AFTER -14d)`;
 
   constructor(
     private readonly configProvider: JiraConfigProvider = jiraConfigProvider,
@@ -52,12 +53,15 @@ export class JiraDashboardService {
       const issueFields = this.buildJiraIssueFields([
         fieldMetadata.complexityFieldId,
         fieldMetadata.devFlowFieldId,
+        fieldMetadata.pendingApprovalFieldId,
         fieldMetadata.epicLinkFieldId,
         fieldMetadata.epicNameFieldId
       ]);
-      const issues = (await this.fetchAllBoardKanbanIssues(client, config.boardId, issueFields)).filter(
-        (issue) => this.isDashboardIssue(issue) && isMappedJiraStatus(issue.fields.status.name)
+      const issues = (await this.fetchAllBoardKanbanIssues(client, config.boardId, issueFields)).filter((issue) =>
+        this.isDashboardIssue(issue)
       );
+
+      this.warnAboutUnknownStatuses(issues);
       const epicKeys = issues
         .map((issue) => this.getIssueEpicKey(issue, fieldMetadata))
         .filter((epicKey): epicKey is string => Boolean(epicKey));
@@ -111,6 +115,24 @@ export class JiraDashboardService {
     return issues;
   }
 
+  /**
+   * An unmapped Jira status used to be filtered out, which made a renamed
+   * status silently empty the board. Now the card still shows (under
+   * "Pendente", flagged) and the server logs the names that need mapping.
+   */
+  private warnAboutUnknownStatuses(issues: JiraIssue[]): void {
+    const unknownStatuses = Array.from(
+      new Set(issues.map((issue) => issue.fields.status.name).filter((status) => !isMappedJiraStatus(status)))
+    );
+
+    if (unknownStatuses.length > 0) {
+      console.warn(
+        `Status do Jira sem mapeamento no dashboard: ${unknownStatuses.join(", ")}. ` +
+          "Atualize STATUS_MAPPING em src/lib/status-mapper.ts."
+      );
+    }
+  }
+
   private isDashboardIssue(issue: JiraIssue): boolean {
     const issueType = issue.fields.issuetype;
     const normalizedIssueTypeName = issueType.name.trim().toLowerCase();
@@ -143,7 +165,9 @@ export class JiraDashboardService {
 
     const uniqueKeys = Array.from(new Set(epicKeys));
     const detailsByKey: JiraEpicDetailsByKey = {};
-    const fields = ["summary", fieldMetadata.issueColorFieldId].filter(Boolean).join(",");
+    const fields = ["summary", fieldMetadata.issueColorFieldId, fieldMetadata.divisionFieldId]
+      .filter(Boolean)
+      .join(",");
 
     for (let index = 0; index < uniqueKeys.length; index += 50) {
       const keys = uniqueKeys.slice(index, index + 50);
@@ -157,12 +181,29 @@ export class JiraDashboardService {
 
         detailsByKey[issue.key] = {
           name: issue.fields.summary,
-          color: typeof color === "string" && color.trim() ? color.trim() : undefined
+          color: typeof color === "string" && color.trim() ? color.trim() : undefined,
+          division: this.getEpicDivision(issue, fieldMetadata.divisionFieldId)
         };
       }
     }
 
     return detailsByKey;
+  }
+
+  private getEpicDivision(issue: JiraIssue, fieldId?: string): string | undefined {
+    if (!fieldId) {
+      return undefined;
+    }
+
+    const value = issue.fields[fieldId];
+
+    if (typeof value === "string") {
+      return value.trim() || undefined;
+    }
+
+    return value && typeof value === "object" && "value" in value && typeof value.value === "string"
+      ? value.value.trim() || undefined
+      : undefined;
   }
 }
 

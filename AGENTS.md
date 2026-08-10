@@ -10,6 +10,11 @@ Este arquivo deve ficar sincronizado com a codebase. Se uma mudança alterar arq
 - Não é substituto do Jira. Mostra uma visão simplificada do Kanban contínuo, sem backlog.
 - Foco: leitura rápida, modo TV, cards principais fora do backlog, HOTFIX, status de negócio e atualização automática.
 - Campo Jira `Fluxo Dev` (`customfield_10414`, valores `Dev Humano` e `Dev IA`) vira `isAiDev` no card, com badge roxo `IA` e filtro `Dev IA` no modo standard.
+- **Em Aprovação** é coluna própria do board, entre Pendente e Em Desenvolvimento, e recebe os dois status do gate (`10224` e `10227`).
+- **Status é sempre comparado por `id`, nunca por nome** — em código, em JQL e no changelog. O nome é traduzido conforme o idioma da conta que consulta e muda em renomeação; serve só para exibir. Constantes em `JIRA_STATUS_ID` (`src/lib/status-mapper.ts`).
+- **Trilha** (`Projeto` × `Sustentação`) vem do campo `Divisão` do **épico pai**; sem épico conta como sustentação. Vira badge no card e filtro no modo standard.
+- **`Aprovação Pendente`** (multiselect `Negócio`/`Dev`) vira badge no card em aprovação; vazio no gate significa que a bola é da IA e mostra `Aguardando IA`.
+- Status do Jira **sem mapeamento não é mais descartado**: cai em `Waiting`, marca `isUnknownStatus` e gera faixa de aviso no painel. Renomear status no Jira sem atualizar `STATUS_MAPPING` esvaziava a coluna em silêncio.
 - Tela `/metrics` possui abas `Overview` (resumo operacional em tempo real com cards de Cards Ativos, Concluídos, Responsáveis e HOTFIX), `Devs` (distribuição por desenvolvedor), `Quality` (Delivery Quality Rate com filtro de período e opção Apenas HOTFIX) e `Flow` (Lead Time, Aging e Tempo de Aprovação (IA), com filtro de período e opção Apenas HOTFIX).
 - Métricas de fluxo distinguem IA × Humano: Lead Time e Aging têm versão segmentada (`leadTimeByFlow`/`agingByFlow`) e há a métrica dedicada **Tempo de Aprovação (IA)** (espera no gate `Aprovação` do PRD, exclusiva do fluxo `Dev IA`). Tudo o que é de IA usa cor violeta + ícone `Sparkles`.
 - Lógica de rejeição QA centralizada em `src/lib/jira/jira-metrics.helper.ts` — usada tanto pelo dashboard quanto pelas métricas de qualidade.

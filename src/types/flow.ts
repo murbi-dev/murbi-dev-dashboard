@@ -32,7 +32,7 @@ export type FlowMetricsPayload = {
   } | null;
   agingByFlow: FlowByDevType;
   /**
-   * Time cards spent waiting in the "Aprovação" gate (PRD approval).
+   * Time cards spent waiting on a person in the "Aprovação PRD/Spec" gate.
    * This gate is exclusive to the AI flow (`Dev IA`), so this metric is
    * inherently AI-only.
    */

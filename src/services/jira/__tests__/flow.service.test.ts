@@ -31,7 +31,7 @@ function doneIssue(
       summary,
       created: "2026-01-01T10:00:00.000Z",
       updated: doneDate,
-      status: { name: "Concluído" },
+      status: { id: "10012", name: "Concluído" },
       issuetype: { name: "Story" },
       priority: { name: priority },
       assignee: { displayName: "Dev" }
@@ -40,11 +40,11 @@ function doneIssue(
       histories: [
         {
           created: inProgressDate,
-          items: [{ field: "status", fromString: "To Do", toString: "In Progress" }]
+          items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }]
         },
         {
           created: doneDate,
-          items: [{ field: "status", fromString: "In Progress", toString: "Done" }]
+          items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }]
         }
       ]
     }
@@ -75,7 +75,7 @@ function activeIssue(
       histories: [
         {
           created: inProgressDate,
-          items: [{ field: "status", fromString: "To Do", toString: "In Progress" }]
+          items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }]
         }
       ]
     }
@@ -98,7 +98,7 @@ describe("JiraFlowService", () => {
       () =>
         ({
           get: async <T>(path: string): Promise<T> => {
-            if (decodeURIComponent(path).includes("status = Done")) {
+            if (decodeURIComponent(path).includes("status = 10012")) {
               return {
                 startAt: 0,
                 maxResults: 100,
@@ -134,7 +134,7 @@ describe("JiraFlowService", () => {
       () =>
         ({
           get: async <T>(path: string): Promise<T> => {
-            if (decodeURIComponent(path).includes("status = Done")) {
+            if (decodeURIComponent(path).includes("status = 10012")) {
               return { startAt: 0, maxResults: 100, total: 0, isLast: true, issues: [] } as T;
             }
 
@@ -170,7 +170,7 @@ describe("JiraFlowService", () => {
       () =>
         ({
           get: async <T>(path: string): Promise<T> => {
-            if (decodeURIComponent(path).includes("status = Done")) {
+            if (decodeURIComponent(path).includes("status = 10012")) {
               return {
                 startAt: 0,
                 maxResults: 100,
@@ -245,7 +245,7 @@ describe("JiraFlowService", () => {
         summary: "Entrega IA",
         created: "2026-01-01T10:00:00.000Z",
         updated: "2026-01-07T10:00:00.000Z",
-        status: { name: "Concluído" },
+        status: { id: "10012", name: "Concluído" },
         issuetype: { name: "Story" },
         priority: { name: "Medium" },
         assignee: { displayName: "IA" },
@@ -253,9 +253,9 @@ describe("JiraFlowService", () => {
       },
       changelog: {
         histories: [
-          { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Aprovação" }] },
-          { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "Aprovação", toString: "In Progress" }] },
-          { created: "2026-01-07T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+          { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "Tarefas pendentes", to: "10224", toString: "Aprovação" }] },
+          { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "10224", fromString: "Aprovação", to: "3", toString: "In Progress" }] },
+          { created: "2026-01-07T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
         ]
       }
     };
@@ -267,7 +267,7 @@ describe("JiraFlowService", () => {
         summary: "Entrega humana",
         created: "2026-01-01T10:00:00.000Z",
         updated: "2026-01-03T10:00:00.000Z",
-        status: { name: "Concluído" },
+        status: { id: "10012", name: "Concluído" },
         issuetype: { name: "Story" },
         priority: { name: "Medium" },
         assignee: { displayName: "Dev" },
@@ -275,8 +275,8 @@ describe("JiraFlowService", () => {
       },
       changelog: {
         histories: [
-          { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
-          { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+          { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] },
+          { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
         ]
       }
     };
@@ -286,7 +286,7 @@ describe("JiraFlowService", () => {
       () =>
         ({
           get: async <T>(path: string): Promise<T> => {
-            if (decodeURIComponent(path).includes("status = Done")) {
+            if (decodeURIComponent(path).includes("status = 10012")) {
               return { startAt: 0, maxResults: 100, total: 2, isLast: true, issues: [doneIa, doneHumano] } as T;
             }
 

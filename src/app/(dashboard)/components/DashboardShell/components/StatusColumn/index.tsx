@@ -2,11 +2,11 @@ import type { BusinessStatus, DashboardIssue } from "@/types/dashboard";
 import { IssueCard } from "./components/IssueCard";
 import { cn } from "@/lib/utils";
 import { getBusinessStatusLabel } from "@/lib/display";
-
-const developmentStatusOrder = ["Aprovação", "Em andamento", "In Progress", "Pull Request", "Pull request", "Pronto para QA"];
+import { COLUMN_STATUS_ID_ORDER } from "@/lib/status-mapper";
 
 const statusAccent: Record<BusinessStatus, string> = {
   Waiting: "bg-slate-500",
+  Approval: "bg-violet-600",
   "In Development": "bg-blue-600",
   Validation: "bg-teal-600",
   Finalizing: "bg-amber-600",
@@ -25,14 +25,14 @@ export function StatusColumn({
   status: BusinessStatus;
   issues: DashboardIssue[];
   totalIssues: number;
-  jiraStatusOptions: Array<[string, number]>;
+  jiraStatusOptions: Array<{ id: string; name: string; count: number }>;
   selectedJiraStatus: string;
   mode: "standard" | "tv";
   onJiraStatusChange: (jiraStatus: string) => void;
 }) {
-  const jiraStatusCounts = [...jiraStatusOptions].sort(([statusA], [statusB]) => {
-    const orderA = developmentStatusOrder.indexOf(statusA);
-    const orderB = developmentStatusOrder.indexOf(statusB);
+  const jiraStatusCounts = [...jiraStatusOptions].sort((a, b) => {
+    const orderA = COLUMN_STATUS_ID_ORDER.indexOf(a.id);
+    const orderB = COLUMN_STATUS_ID_ORDER.indexOf(b.id);
 
     if (orderA !== -1 || orderB !== -1) {
       const normalizedOrderA = orderA === -1 ? Number.MAX_SAFE_INTEGER : orderA;
@@ -41,7 +41,7 @@ export function StatusColumn({
       return normalizedOrderA - normalizedOrderB;
     }
 
-    return statusA.localeCompare(statusB, "pt-BR");
+    return a.name.localeCompare(b.name, "pt-BR");
   });
   const canFilterByJiraStatus = mode === "standard" && jiraStatusCounts.length > 1;
   const hasStatusFilter = selectedJiraStatus !== "all";
@@ -76,29 +76,29 @@ export function StatusColumn({
                 Todos
                 <span className="font-semibold">{totalIssues}</span>
               </button>
-              {jiraStatusCounts.map(([jiraStatus, count]) => (
+              {jiraStatusCounts.map(({ id, name, count }) => (
                 <button
                   type="button"
-                  key={jiraStatus}
-                  title={jiraStatus}
+                  key={id}
+                  title={name}
                   className={cn(
                     "inline-flex h-7 min-w-0 max-w-full items-center gap-1 rounded-md border px-2 text-xs font-medium transition-colors",
-                    selectedJiraStatus === jiraStatus
+                    selectedJiraStatus === id
                       ? "border-primary bg-primary text-primary-foreground"
                       : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                   )}
-                  onClick={() => onJiraStatusChange(jiraStatus)}
+                  onClick={() => onJiraStatusChange(id)}
                 >
-                  <span className="truncate">{jiraStatus}</span>
+                  <span className="truncate">{name}</span>
                   <span className="shrink-0 font-semibold">{count}</span>
                 </button>
               ))}
             </div>
           ) : (
             <dl className={cn("mt-2 grid gap-1 text-muted-foreground", mode === "tv" ? "text-xs" : "text-xs")}>
-              {jiraStatusCounts.map(([jiraStatus, count]) => (
-                <div key={jiraStatus} className="flex min-w-0 items-center justify-between gap-2">
-                  <dt className="truncate">{jiraStatus}</dt>
+              {jiraStatusCounts.map(({ id, name, count }) => (
+                <div key={id} className="flex min-w-0 items-center justify-between gap-2">
+                  <dt className="truncate">{name}</dt>
                   <dd className="shrink-0 font-semibold text-foreground">{count}</dd>
                 </div>
               ))}
@@ -113,6 +113,7 @@ export function StatusColumn({
               key={issue.id}
               issue={issue}
               mode={mode}
+              showJiraStatus={jiraStatusCounts.length > 1}
             />
           ))
         ) : (

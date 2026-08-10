@@ -2,6 +2,7 @@ import type { BusinessStatus } from "@/types/dashboard";
 
 export const BUSINESS_STATUSES: BusinessStatus[] = [
   "Waiting",
+  "Approval",
   "In Development",
   "Validation",
   "Finalizing",
@@ -9,34 +10,57 @@ export const BUSINESS_STATUSES: BusinessStatus[] = [
 ];
 
 /**
- * Canonical Jira status display names. Use these constants instead of
- * hardcoding the raw strings so the mapping stays in a single place.
+ * Jira status **ids** — the only stable identity a status has.
+ *
+ * The display name is not: it is translated per the language of the account
+ * that queries (a Portuguese account gets "Em andamento", an English one gets
+ * "In Progress"), and it changes whenever someone renames the status in the
+ * workflow. Both already broke this board once. Match by id; use the name only
+ * for display.
+ *
+ * Confirmed against `/rest/api/3/project/MURBI/statuses`.
  */
-export const JIRA_STATUS = {
-  PENDING: "Tarefas pendentes",
-  APPROVAL: "Aprovação",
-  IN_PROGRESS: "Em andamento",
-  PULL_REQUEST: "Pull request",
-  READY_FOR_QA: "Pronto para QA",
-  QA_TESTING: "Teste QA",
-  READY_FOR_PROD: "Pronto para PROD",
-  DONE: "Concluído"
+export const JIRA_STATUS_ID = {
+  BACKLOG: "10191",
+  PENDING: "10011",
+  APPROVAL: "10224",
+  APPROVAL_REJECTED: "10227",
+  IN_PROGRESS: "3",
+  PULL_REQUEST: "10013",
+  READY_FOR_QA: "10091",
+  QA_TESTING: "10158",
+  READY_FOR_PROD: "10125",
+  DONE: "10012",
+  REJECTED: "10014"
 } as const;
 
-export type JiraStatus = (typeof JIRA_STATUS)[keyof typeof JIRA_STATUS];
+export type JiraStatusId = (typeof JIRA_STATUS_ID)[keyof typeof JIRA_STATUS_ID];
 
 export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
-  Waiting: [JIRA_STATUS.PENDING],
-  "In Development": [JIRA_STATUS.IN_PROGRESS, JIRA_STATUS.APPROVAL, JIRA_STATUS.PULL_REQUEST, JIRA_STATUS.READY_FOR_QA],
-  Validation: [JIRA_STATUS.QA_TESTING],
-  Finalizing: [JIRA_STATUS.READY_FOR_PROD],
-  Done: [JIRA_STATUS.DONE]
+  Waiting: [JIRA_STATUS_ID.PENDING],
+  Approval: [JIRA_STATUS_ID.APPROVAL, JIRA_STATUS_ID.APPROVAL_REJECTED],
+  "In Development": [JIRA_STATUS_ID.IN_PROGRESS, JIRA_STATUS_ID.PULL_REQUEST, JIRA_STATUS_ID.READY_FOR_QA],
+  Validation: [JIRA_STATUS_ID.QA_TESTING],
+  Finalizing: [JIRA_STATUS_ID.READY_FOR_PROD],
+  Done: [JIRA_STATUS_ID.DONE]
 };
 
-const normalizedStatusMapping = Object.entries(STATUS_MAPPING).reduce(
-  (acc, [businessStatus, jiraStatuses]) => {
-    for (const jiraStatus of jiraStatuses) {
-      acc[normalizeStatusName(jiraStatus)] = businessStatus as BusinessStatus;
+/**
+ * Order used inside the Approval and In Development columns, so the Jira status
+ * dropdown follows the flow instead of the alphabet. By id, like everything else.
+ */
+export const COLUMN_STATUS_ID_ORDER: string[] = [
+  JIRA_STATUS_ID.APPROVAL,
+  JIRA_STATUS_ID.APPROVAL_REJECTED,
+  JIRA_STATUS_ID.IN_PROGRESS,
+  JIRA_STATUS_ID.PULL_REQUEST,
+  JIRA_STATUS_ID.READY_FOR_QA
+];
+
+const statusMappingById = Object.entries(STATUS_MAPPING).reduce(
+  (acc, [businessStatus, statusIds]) => {
+    for (const statusId of statusIds) {
+      acc[statusId] = businessStatus as BusinessStatus;
     }
 
     return acc;
@@ -44,14 +68,10 @@ const normalizedStatusMapping = Object.entries(STATUS_MAPPING).reduce(
   {} as Record<string, BusinessStatus>
 );
 
-function normalizeStatusName(status: string): string {
-  return status.trim().toLowerCase();
+export function mapJiraStatusToBusinessStatus(statusId: string): BusinessStatus {
+  return statusMappingById[statusId.trim()] ?? "Waiting";
 }
 
-export function mapJiraStatusToBusinessStatus(status: string): BusinessStatus {
-  return normalizedStatusMapping[normalizeStatusName(status)] ?? "Waiting";
-}
-
-export function isMappedJiraStatus(status: string): boolean {
-  return normalizedStatusMapping[normalizeStatusName(status)] !== undefined;
+export function isMappedJiraStatus(statusId: string): boolean {
+  return statusMappingById[statusId.trim()] !== undefined;
 }

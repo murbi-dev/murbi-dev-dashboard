@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { AlertTriangle, CalendarClock, Clock3, Flame, RotateCcw, Sparkles, UserCircle2, X } from 'lucide-react';
+import { AlertTriangle, Briefcase, CalendarClock, Clock3, Flame, LifeBuoy, RotateCcw, Sparkles, Stamp, UserCircle2, X } from 'lucide-react';
 import { getStaleLevel } from '@/lib/alerts';
 import {
   formatRelativeAge,
@@ -10,7 +10,7 @@ import {
 } from '@/lib/time';
 import { formatDueDate, getDueDateTone } from '@/lib/due-date';
 import { getPriorityLabel } from '@/lib/display';
-import type { DashboardIssue } from '@/types/dashboard';
+import type { DashboardIssue, PendingApproval } from '@/types/dashboard';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 
@@ -37,6 +37,29 @@ const dueDateClass = {
     'border-red-300 bg-red-100 text-red-800 dark:border-red-800 dark:bg-red-950/70 dark:text-red-200',
 };
 
+const trackLabel = {
+  project: 'Projeto',
+  sustaining: 'Sustentação',
+} as const;
+
+const trackClass = {
+  project:
+    'border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+  sustaining:
+    'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
+} as const;
+
+const pendingApprovalLabel: Record<PendingApproval, string> = {
+  business: 'Negócio',
+  dev: 'Dev',
+};
+
+const pendingApprovalClass: Record<PendingApproval, string> = {
+  business:
+    'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-200',
+  dev: 'border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-700 dark:bg-sky-950/60 dark:text-sky-200',
+};
+
 const rejectionDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   day: '2-digit',
   month: '2-digit',
@@ -52,9 +75,15 @@ function formatRejectionDate(value: string): string {
 export function IssueCard({
   issue,
   mode,
+  showJiraStatus,
 }: {
   issue: DashboardIssue;
   mode: 'standard' | 'tv';
+  /**
+   * Only worth showing when the column holds more than one Jira status —
+   * numa coluna de status único ele repete o título da coluna.
+   */
+  showJiraStatus: boolean;
 }) {
   const staleLevel = getStaleLevel(issue);
   const dueDateTone = issue.dueDate ? getDueDateTone(issue.dueDate) : undefined;
@@ -62,6 +91,11 @@ export function IssueCard({
   const epicColorStyle = issue.epic?.color
     ? { backgroundColor: issue.epic.color }
     : undefined;
+  const isInApproval = issue.businessStatus === 'Approval';
+  // Empty while the card sits in the gate does not mean "nobody owes it":
+  // it means the ball is with the AI, exactly like the ai-flow-radar reads it.
+  const isWaitingOnAi = isInApproval && issue.pendingApprovals.length === 0;
+  const TrackIcon = issue.track === 'project' ? Briefcase : LifeBuoy;
 
   return (
     <>
@@ -102,36 +136,47 @@ export function IssueCard({
             {issue.key}
           </a>
         </div>
-        <div className="flex shrink-0 flex-wrap justify-end gap-1">
-          {issue.isAiDev ? (
-            <Badge
-              variant="outline"
-              className="gap-1 border-violet-300 bg-violet-100 font-semibold text-violet-800 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
-              title="Fluxo Dev: Dev IA"
-            >
-              <Sparkles className="h-3 w-3" />
-              IA
-            </Badge>
-          ) : null}
-          {issue.complexity ? (
-            <Badge variant="secondary" className="font-semibold">
-              {issue.complexity}
-            </Badge>
-          ) : null}
+        <div className="flex shrink-0 items-center gap-1">
           {issue.isHotfix ? (
             <Badge variant="hotfix">
               <Flame className="mr-1 h-3 w-3" />
               HOTFIX
             </Badge>
-          ) : (
-            <Badge
-              variant="outline"
-              className={cn('border', priorityClass[issue.priority])}
-            >
-              {getPriorityLabel(issue.priority)}
-            </Badge>
-          )}
+          ) : null}
+          <Badge
+            variant="secondary"
+            className={cn('font-semibold', !issue.complexity && 'text-muted-foreground')}
+            title={issue.complexity ? `Complexidade ${issue.complexity}` : 'Complexidade não definida'}
+          >
+            {issue.complexity ?? '—'}
+          </Badge>
         </div>
+      </div>
+
+      <div className="mt-1.5 flex flex-wrap items-center gap-1">
+        {issue.isAiDev ? (
+          <Badge
+            variant="outline"
+            className="gap-1 border-violet-300 bg-violet-100 font-semibold text-violet-800 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
+            title="Fluxo Dev: Dev IA"
+          >
+            <Sparkles className="h-3 w-3" />
+            IA
+          </Badge>
+        ) : null}
+        <Badge
+          variant="outline"
+          className={cn('gap-1 border font-medium', trackClass[issue.track])}
+          title={`Trilha: ${trackLabel[issue.track]}`}
+        >
+          <TrackIcon className="h-3 w-3" />
+          {trackLabel[issue.track]}
+        </Badge>
+        {issue.isHotfix ? null : (
+          <Badge variant="outline" className={cn('border', priorityClass[issue.priority])}>
+            {getPriorityLabel(issue.priority)}
+          </Badge>
+        )}
       </div>
 
       <h3
@@ -158,11 +203,35 @@ export function IssueCard({
         </Badge>
       ) : null}
 
+      {isInApproval ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {isWaitingOnAi ? (
+            <Badge
+              variant="outline"
+              className="gap-1 border-violet-300 bg-violet-100 font-semibold text-violet-800 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
+              title="Aprovação Pendente vazio — a bola está com a IA"
+            >
+              <Sparkles className="h-3 w-3" />
+              Aguardando IA
+            </Badge>
+          ) : (
+            issue.pendingApprovals.map((approval) => (
+              <Badge
+                key={approval}
+                variant="outline"
+                className={cn('gap-1 border font-semibold', pendingApprovalClass[approval])}
+                title={`Aguardando aprovação de ${pendingApprovalLabel[approval]}`}
+              >
+                <Stamp className="h-3 w-3" />
+                {pendingApprovalLabel[approval]}
+              </Badge>
+            ))
+          )}
+        </div>
+      ) : null}
+
       <div className="mt-2 flex min-w-0 items-center justify-between gap-2">
-        <Badge variant="secondary" className="min-w-0 max-w-[48%] truncate">
-          {issue.jiraStatus}
-        </Badge>
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 text-muted-foreground">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 text-muted-foreground">
           {issue.assignee.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -173,12 +242,15 @@ export function IssueCard({
           ) : (
             <UserCircle2 className={cn('h-5 w-5 shrink-0', mode === 'tv' && 'h-6 w-6')} />
           )}
-          <span
-            className={cn('truncate text-right', mode === 'tv' ? 'text-sm' : 'text-xs')}
-          >
+          <span className={cn('truncate', mode === 'tv' ? 'text-sm' : 'text-xs')}>
             {issue.assignee.name}
           </span>
         </div>
+        {showJiraStatus ? (
+          <Badge variant="secondary" className="min-w-0 max-w-[48%] shrink-0 truncate">
+            {issue.jiraStatus}
+          </Badge>
+        ) : null}
       </div>
 
       <footer

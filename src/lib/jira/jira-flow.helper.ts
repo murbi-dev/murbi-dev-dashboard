@@ -2,14 +2,12 @@
  * Flow metrics helper — shared logic for Lead Time, Aging and active-issue
  * detection.
  *
- * ## Status names used in changelog scanning
+ * ## Status matching
  *
- * The Jira API may return either the **display name** (Portuguese) or the
- * **system name** (English) in the changelog (`fromString` / `toString`).
- * Both forms are checked:
- *
- * - **In Progress (start of work):** `"Em andamento"` / `"In Progress"`
- * - **Done (completion):** `"Concluído"` / `"Done"`
+ * Everything here compares **status ids**, never names. The changelog carries
+ * both (`from`/`to` are ids, `fromString`/`toString` are names), and the name
+ * is translated per the language of the account that queries — so matching by
+ * name silently stops working when the service account changes.
  *
  * ## Lead Time
  *
@@ -62,37 +60,23 @@
 
 import type { JiraIssue } from "@/types/jira";
 import type { FlowStats } from "@/types/flow";
-import { JIRA_STATUS, STATUS_MAPPING } from "@/lib/status-mapper";
+import { JIRA_STATUS_ID } from "@/lib/status-mapper";
+
+/** Status where work starts. */
+const IN_PROGRESS_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.IN_PROGRESS]);
+
+/** Status that means the card is finished. */
+const DONE_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.DONE]);
 
 /**
- * Normalised display names for the "In Progress" (start of work) status.
+ * Status where the card waits on a person. Exclusive to the AI flow
+ * (`Fluxo Dev = Dev IA`).
  *
- * Both Portuguese (`"em andamento"`) and English (`"in progress"`) forms are
- * covered since the Jira changelog may return either depending on the
- * environment configuration.
+ * The rejected status is deliberately **not** here: while the card sits there
+ * the ball is with the AI reworking the artefact, not with a person, and this
+ * metric measures how long the AI waits for us.
  */
-const IN_PROGRESS_ENTRY_NAMES = new Set([
-  ...STATUS_MAPPING["In Development"].slice(0, 1).map((s) => s.toLowerCase()),
-  "in progress"
-]);
-
-/**
- * Normalised display names for the "Done" (completion) status.
- *
- * Portuguese: `"concluído"`, English: `"done"`.
- */
-const DONE_ENTRY_NAMES = new Set([
-  ...STATUS_MAPPING["Done"].map((s) => s.toLowerCase()),
-  "done"
-]);
-
-/**
- * Normalised display name for the "Aprovação" (AI PRD gate) status. This gate
- * is exclusive to the AI flow (`Fluxo Dev = Dev IA`). No dashboard column of
- * its own — cards in "Aprovação" show under "Em Desenvolvimento" — but the
- * approval-wait metric still tracks it by its Jira status name.
- */
-const APPROVAL_ENTRY_NAMES = new Set([JIRA_STATUS.APPROVAL.toLowerCase()]);
+const APPROVAL_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.APPROVAL]);
 
 /**
  * Normalised value of the `Fluxo Dev` field that flags an AI-driven card.
@@ -100,38 +84,27 @@ const APPROVAL_ENTRY_NAMES = new Set([JIRA_STATUS.APPROVAL.toLowerCase()]);
 const AI_DEV_FLOW_VALUE = "dev ia";
 
 /**
- * Normalises a Jira status name for case-insensitive comparison.
- */
-function normalize(status: string): string {
-  return status.trim().toLowerCase();
-}
-
-/**
  * Extracts all status-change events from the changelog, sorted oldest first.
  */
 function getStatusHistory(issue: JiraIssue): Array<{
-  fromStatus: string;
-  toStatus: string;
+  fromId: string;
+  toId: string;
   changedAt: string;
 }> {
   if (!issue.changelog?.histories) return [];
 
   const events: Array<{
-    fromStatus: string;
-    toStatus: string;
+    fromId: string;
+    toId: string;
     changedAt: string;
   }> = [];
 
   for (const history of issue.changelog.histories) {
     for (const item of history.items) {
-      if (
-        item.field.toLowerCase() === "status" &&
-        item.fromString != null &&
-        item.toString != null
-      ) {
+      if (item.field.toLowerCase() === "status" && item.from != null && item.to != null) {
         events.push({
-          fromStatus: item.fromString,
-          toStatus: item.toString,
+          fromId: item.from,
+          toId: item.to,
           changedAt: history.created
         });
       }
@@ -153,7 +126,7 @@ export function getFirstInProgressDate(issue: JiraIssue): string | null {
   const history = getStatusHistory(issue);
 
   for (const event of history) {
-    if (IN_PROGRESS_ENTRY_NAMES.has(normalize(event.toStatus))) {
+    if (IN_PROGRESS_ENTRY_IDS.has(event.toId)) {
       return event.changedAt;
     }
   }
@@ -170,7 +143,7 @@ export function getFirstDoneDate(issue: JiraIssue): string | null {
   const history = getStatusHistory(issue);
 
   for (const event of history) {
-    if (DONE_ENTRY_NAMES.has(normalize(event.toStatus))) {
+    if (DONE_ENTRY_IDS.has(event.toId)) {
       return event.changedAt;
     }
   }
@@ -225,25 +198,9 @@ export function calculateAging(issue: JiraIssue): number | null {
  * - Has entered an In-Progress status at least once.
  */
 export function isActiveIssue(issue: JiraIssue): boolean {
-  const currentStatus = normalize(issue.fields.status.name);
-
-  if (DONE_ENTRY_NAMES.has(currentStatus)) return false;
+  if (DONE_ENTRY_IDS.has(issue.fields.status.id)) return false;
 
   return getFirstInProgressDate(issue) !== null;
-}
-
-/**
- * Returns the list of Jira status **display names** that are considered
- * "active" (i.e. part of the development flow but not Done).
- *
- * This is derived from `STATUS_MAPPING` automatically.
- */
-export function getActiveJiraStatusNames(): string[] {
-  return [
-    ...STATUS_MAPPING["In Development"],
-    ...STATUS_MAPPING["Validation"],
-    ...STATUS_MAPPING["Finalizing"]
-  ];
 }
 
 /**
@@ -281,10 +238,15 @@ export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean
 }
 
 /**
- * Calculates how long a card waited in the "Aprovação" gate (PRD approval).
+ * Calculates how long a card waited on a person in the approval gate.
  *
- * Uses the **first** entry into "Aprovação" and the first exit out of it. If
- * the card is still sitting in "Aprovação", measures until now.
+ * Sums **every** stay in "Aprovação PRD/Spec", not just the first one. A card
+ * now passes through the gate more than once by design — a rejection sends it
+ * to "PRD/Spec Reprovado" and back, and sustaining cards are approved twice
+ * (PRD, then Spec) — so measuring only the first stay would undercount. Time
+ * spent in "PRD/Spec Reprovado" is not counted: there the AI is reworking.
+ *
+ * If the card is still sitting in the gate, the open stay counts until now.
  *
  * @returns Calendar days (rounded to 1 decimal), or `null` if the card never
  *   entered the approval gate.
@@ -292,25 +254,33 @@ export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean
 export function calculateApprovalWait(issue: JiraIssue): number | null {
   const history = getStatusHistory(issue);
   let entryMs: number | null = null;
+  let totalMs = 0;
+  let everEntered = false;
 
   for (const event of history) {
-    if (entryMs === null && APPROVAL_ENTRY_NAMES.has(normalize(event.toStatus))) {
+    if (entryMs === null && APPROVAL_ENTRY_IDS.has(event.toId)) {
       entryMs = new Date(event.changedAt).getTime();
+      everEntered = true;
       continue;
     }
 
-    if (entryMs !== null && APPROVAL_ENTRY_NAMES.has(normalize(event.fromStatus))) {
+    if (entryMs !== null && APPROVAL_ENTRY_IDS.has(event.fromId)) {
       const exitMs = new Date(event.changedAt).getTime();
-      const days = (exitMs - entryMs) / (1000 * 60 * 60 * 24);
-      return days >= 0 ? roundTo1(days) : null;
+
+      if (exitMs > entryMs) {
+        totalMs += exitMs - entryMs;
+      }
+
+      entryMs = null;
     }
   }
 
-  if (entryMs !== null && APPROVAL_ENTRY_NAMES.has(normalize(issue.fields.status.name))) {
-    return roundTo1((Date.now() - entryMs) / (1000 * 60 * 60 * 24));
+  if (entryMs !== null && APPROVAL_ENTRY_IDS.has(issue.fields.status.id)) {
+    totalMs += Date.now() - entryMs;
+    everEntered = true;
   }
 
-  return null;
+  return everEntered ? roundTo1(totalMs / (1000 * 60 * 60 * 24)) : null;
 }
 
 /**

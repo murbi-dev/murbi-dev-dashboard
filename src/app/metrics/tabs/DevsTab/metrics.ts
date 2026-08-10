@@ -1,4 +1,4 @@
-import { JIRA_STATUS, STATUS_MAPPING } from "@/lib/status-mapper";
+import { JIRA_STATUS_ID, STATUS_MAPPING } from "@/lib/status-mapper";
 import type { DashboardIssue } from "@/types/dashboard";
 
 export type DeveloperMetrics = {
@@ -57,7 +57,7 @@ export function buildDeveloperMetrics(issues: DashboardIssue[]): DeveloperMetric
     current.avatarUrl = current.avatarUrl ?? issue.assignee.avatarUrl;
     current.total += 1;
     current.active += isDone ? 0 : 1;
-    current.inDevelopment += issue.jiraStatus === JIRA_STATUS.IN_PROGRESS ? 1 : 0;
+    current.inDevelopment += issue.jiraStatusId === JIRA_STATUS_ID.IN_PROGRESS ? 1 : 0;
     current.done += isDone ? 1 : 0;
     current.hotfixes += issue.isHotfix ? 1 : 0;
     current.qaRejections += !isDone && issue.qaRejectionCount > 0 ? 1 : 0;

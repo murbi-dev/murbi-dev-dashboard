@@ -12,15 +12,15 @@ describe("JiraIssueNormalizerService", () => {
           histories: [
             {
               created: "2026-06-03T09:00:00.000-0300",
-              items: [{ field: "status", fromString: "Teste QA", toString: "In Progress" }]
+              items: [{ field: "status", from: "10158", fromString: "Teste QA", to: "3", toString: "In Progress" }]
             },
             {
               created: "2026-06-02T15:11:03.156-0300",
-              items: [{ field: "status", fromString: "Teste QA", toString: "To Do" }]
+              items: [{ field: "status", from: "10158", fromString: "Teste QA", to: "10011", toString: "To Do" }]
             },
             {
               created: "2026-06-01T10:00:00.000-0300",
-              items: [{ field: "status", fromString: "Pronto para QA", toString: "Teste QA" }]
+              items: [{ field: "status", from: "10091", fromString: "Pronto para QA", to: "10158", toString: "Teste QA" }]
             }
           ]
         }
@@ -95,5 +95,65 @@ describe("JiraIssueNormalizerService", () => {
 
     expect(humanIssue.isAiDev).toBe(false);
     expect(emptyIssue.isAiDev).toBe(false);
+  });
+
+  describe("trilha e aprovação pendente", () => {
+    const fieldMetadata = {
+      divisionFieldId: "customfield_10415",
+      pendingApprovalFieldId: "customfield_10483"
+    };
+
+    function normalize(fields: Record<string, unknown>, epicDivision?: string) {
+      return normalizer.normalizeIssue(
+        jiraIssueFixture({
+          fields: {
+            ...jiraIssueFixture().fields,
+            parent: {
+              key: "MURBI-500",
+              fields: { summary: "Épico", issuetype: { name: "Epic", hierarchyLevel: 1 } }
+            },
+            ...fields
+          }
+        }),
+        "https://murbi-team.atlassian.net",
+        fieldMetadata,
+        { "MURBI-500": { name: "Épico", division: epicDivision } }
+      );
+    }
+
+    it("reads the project track from the epic's Divisão", () => {
+      expect(normalize({}, "Projeto").track).toBe("project");
+    });
+
+    it("treats Sustentação, empty division and no epic as sustaining", () => {
+      expect(normalize({}, "Sustentação").track).toBe("sustaining");
+      expect(normalize({}, undefined).track).toBe("sustaining");
+      expect(
+        normalizer.normalizeIssue(jiraIssueFixture(), "https://murbi-team.atlassian.net", fieldMetadata).track
+      ).toBe("sustaining");
+    });
+
+    it("reads both values of the Aprovação Pendente multiselect", () => {
+      const issue = normalize({
+        customfield_10483: [{ value: "Negócio" }, { value: "Dev" }]
+      });
+
+      expect(issue.pendingApprovals).toEqual(["business", "dev"]);
+    });
+
+    it("returns no pending approvals when the field is empty or absent", () => {
+      expect(normalize({ customfield_10483: [] }).pendingApprovals).toEqual([]);
+      expect(normalize({}).pendingApprovals).toEqual([]);
+    });
+
+    it("flags a Jira status the dashboard cannot place", () => {
+      expect(normalize({ status: { id: "99999", name: "Status novo" } }).isUnknownStatus).toBe(true);
+      expect(normalize({ status: { id: "10224", name: "Aprovação" } }).isUnknownStatus).toBe(false);
+    });
+
+    it("puts both gate statuses in the Approval column", () => {
+      expect(normalize({ status: { id: "10224", name: "Aprovação" } }).businessStatus).toBe("Approval");
+      expect(normalize({ status: { id: "10227", name: "PRD Reprovado" } }).businessStatus).toBe("Approval");
+    });
   });
 });

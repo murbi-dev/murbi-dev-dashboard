@@ -28,6 +28,7 @@ export type JiraIssue = {
     updated: string;
     duedate?: string | null;
     status: {
+      id: string;
       name: string;
     };
     issuetype: {
@@ -82,13 +83,17 @@ export type JiraField = {
 export type JiraDashboardFieldMetadata = {
   complexityFieldId?: string;
   devFlowFieldId?: string;
+  /** "Divisão" — lives on the epic, not on the card. */
+  divisionFieldId?: string;
+  /** "Aprovação Pendente" — multiselect, so it arrives as an array. */
+  pendingApprovalFieldId?: string;
   epicLinkFieldId?: string;
   epicNameFieldId?: string;
   issueColorFieldId?: string;
   sprintFieldId?: string;
 };
 
-export type JiraEpicDetailsByKey = Record<string, { name?: string; color?: string }>;
+export type JiraEpicDetailsByKey = Record<string, { name?: string; color?: string; division?: string }>;
 
 export type JiraSearchResponse = {
   startAt: number;

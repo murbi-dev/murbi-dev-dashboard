@@ -9,9 +9,7 @@ export function jiraIssueFixture(overrides: Partial<JiraIssue> = {}): JiraIssue 
       created: "2026-05-04T16:10:09.016-0300",
       updated: "2026-06-02T17:18:18.489-0300",
       duedate: "2026-06-10",
-      status: {
-        name: "Em andamento"
-      },
+      status: { id: "3", name: "Em andamento" },
       issuetype: {
         name: "Story",
         iconUrl: "https://example.com/story.svg"
@@ -35,15 +33,15 @@ export function jiraIssueFixture(overrides: Partial<JiraIssue> = {}): JiraIssue 
       histories: [
         {
           created: "2026-06-02T17:18:18.489-0300",
-          items: [{ field: "status", fromString: "To Do", toString: "In Progress" }]
+          items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }]
         },
         {
           created: "2026-06-02T15:11:03.156-0300",
-          items: [{ field: "status", fromString: "Teste QA", toString: "To Do" }]
+          items: [{ field: "status", from: "10158", fromString: "Teste QA", to: "10011", toString: "To Do" }]
         },
         {
           created: "2026-05-28T21:27:21.213-0300",
-          items: [{ field: "status", fromString: "Pronto para QA", toString: "Teste QA" }]
+          items: [{ field: "status", from: "10091", fromString: "Pronto para QA", to: "10158", toString: "Teste QA" }]
         }
       ]
     }

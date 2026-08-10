@@ -2,6 +2,7 @@ import type { BusinessStatus, IssuePriority } from "@/types/dashboard";
 
 export const businessStatusLabels: Record<BusinessStatus, string> = {
   Waiting: "Pendente",
+  Approval: "Em Aprovação",
   "In Development": "Em Desenvolvimento",
   Validation: "Em Teste",
   Finalizing: "Aguardando Deploy",

@@ -1,6 +1,6 @@
-import { mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
+import { isMappedJiraStatus, mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
 import { getQaRejectionEvents, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
-import type { DashboardIssue, IssueComplexity, IssuePriority } from "@/types/dashboard";
+import type { DashboardIssue, IssueComplexity, IssuePriority, IssueTrack, PendingApproval } from "@/types/dashboard";
 import type { JiraBoard, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraIssue } from "@/types/jira";
 
 export class JiraIssueNormalizerService {
@@ -8,6 +8,13 @@ export class JiraIssueNormalizerService {
   private static readonly validComplexities = new Set(["PP", "P", "M", "G", "GG"]);
   /** Value of the Jira "Fluxo Dev" field that marks an issue as developed by AI. */
   private static readonly aiDevFlowValue = "dev ia";
+  /** Value of the epic's "Divisão" field that marks the project track. */
+  private static readonly projectDivisionValue = "projeto";
+  /** Values of the "Aprovação Pendente" multiselect, mapped to our own names. */
+  private static readonly pendingApprovalValues: Record<string, PendingApproval> = {
+    negocio: "business",
+    dev: "dev"
+  };
 
   normalizeIssue(
     issue: JiraIssue,
@@ -16,6 +23,7 @@ export class JiraIssueNormalizerService {
     epicDetailsByKey: JiraEpicDetailsByKey = {}
   ): DashboardIssue {
     const jiraStatus = issue.fields.status.name;
+    const jiraStatusId = issue.fields.status.id;
     const priority = issue.fields.priority?.name ?? "Unknown";
     const title = issue.fields.summary;
     const statusEntryDate = this.getLatestStatusEntryDate(issue, jiraStatus);
@@ -39,9 +47,13 @@ export class JiraIssueNormalizerService {
       },
       priority: JiraIssueNormalizerService.validPriorities.has(priority) ? (priority as IssuePriority) : "Unknown",
       jiraStatus,
-      businessStatus: mapJiraStatusToBusinessStatus(jiraStatus),
+      jiraStatusId,
+      businessStatus: mapJiraStatusToBusinessStatus(jiraStatusId),
       isHotfix: isHotfixIssue(issue),
       isAiDev: this.getIsAiDev(issue, fieldMetadata.devFlowFieldId),
+      track: this.getTrack(epic, epicDetailsByKey),
+      pendingApprovals: this.getPendingApprovals(issue, fieldMetadata.pendingApprovalFieldId),
+      isUnknownStatus: !isMappedJiraStatus(jiraStatusId),
       qaRejectionCount: qaRejections.length,
       qaRejections,
       createdAt: issue.fields.created,
@@ -90,6 +102,54 @@ export class JiraIssueNormalizerService {
     const normalizedValue = rawValue.trim().toUpperCase();
 
     return JiraIssueNormalizerService.validComplexities.has(normalizedValue) ? (normalizedValue as IssueComplexity) : undefined;
+  }
+
+  /**
+   * A card belongs to the project track only when its epic says so. No epic,
+   * empty "Divisão" or any other value means sustaining — the same rule the
+   * `dev-flow` skill applies when it decides which artefacts to produce.
+   */
+  private getTrack(epic: DashboardIssue["epic"], epicDetailsByKey: JiraEpicDetailsByKey): IssueTrack {
+    const division = epic?.key ? epicDetailsByKey[epic.key]?.division : undefined;
+
+    return division?.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") ===
+      JiraIssueNormalizerService.projectDivisionValue
+      ? "project"
+      : "sustaining";
+  }
+
+  private getPendingApprovals(issue: JiraIssue, fieldId?: string): PendingApproval[] {
+    return this.getMultiOptionFieldValues(issue, fieldId)
+      .map((value) => JiraIssueNormalizerService.pendingApprovalValues[this.normalizeOptionValue(value)])
+      .filter((approval): approval is PendingApproval => Boolean(approval));
+  }
+
+  private normalizeOptionValue(value: string): string {
+    return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  private getMultiOptionFieldValues(issue: JiraIssue, fieldId?: string): string[] {
+    if (!fieldId) {
+      return [];
+    }
+
+    const value = issue.fields[fieldId];
+
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((option) => {
+        if (typeof option === "string") {
+          return option;
+        }
+
+        return option && typeof option === "object" && "value" in option && typeof option.value === "string"
+          ? option.value
+          : undefined;
+      })
+      .filter((option): option is string => Boolean(option));
   }
 
   private getIsAiDev(issue: JiraIssue, fieldId?: string): boolean {

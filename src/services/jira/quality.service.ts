@@ -32,7 +32,7 @@
  *
  * - Delivered tickets that were reopened and moved out of "Done" to an
  *   active status may not be captured by the current JQL filter (the
- *   filter requires `status = Done` — the system status name).
+ *   filter uses the status **id**, never the name — names are translated per account).
  * - Relies on `expand=changelog` — if the changelog is truncated by Jira
  *   (more than 100 entries), some rejection events may be missed.
  * - The JQL uses the Jira system status name "Done". If your Jira
@@ -46,6 +46,7 @@
  * - Shared helper `src/lib/jira/jira-metrics.helper.ts`
  */
 
+import { JIRA_STATUS_ID } from "@/lib/status-mapper";
 import { jiraConfigProvider, JiraConfigProvider } from "@/lib/jira/jira-config.provider";
 import { JiraClient } from "@/clients/jira/jira.client";
 import { getQaRejectionCount, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
@@ -157,7 +158,7 @@ export class JiraQualityService {
      */
     const endDateExclusive = this.addDays(endDate, 1);
     const jql = encodeURIComponent(
-      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND status CHANGED TO Done AFTER "${startDate}" AND status CHANGED TO Done BEFORE "${endDateExclusive}"`
+      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = ${JIRA_STATUS_ID.DONE} AND status CHANGED TO ${JIRA_STATUS_ID.DONE} AFTER "${startDate}" AND status CHANGED TO ${JIRA_STATUS_ID.DONE} BEFORE "${endDateExclusive}"`
     );
 
     while (startAt < total) {

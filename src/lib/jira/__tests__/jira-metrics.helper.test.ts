@@ -10,7 +10,7 @@ function makeIssue(priority?: string): JiraIssue {
       summary: "Correção urgente",
       created: "2026-01-01T10:00:00.000Z",
       updated: "2026-06-10T10:00:00.000Z",
-      status: { name: "Concluído" },
+      status: { id: "10012", name: "Concluído" },
       issuetype: { name: "Story" },
       priority: priority ? { name: priority } : undefined,
       assignee: { displayName: "Dev" }

@@ -42,6 +42,7 @@
  * - Shared helper `src/lib/jira/jira-flow.helper.ts`
  */
 
+import { JIRA_STATUS_ID } from "@/lib/status-mapper";
 import { jiraConfigProvider, JiraConfigProvider } from "@/lib/jira/jira-config.provider";
 import { JiraClient } from "@/clients/jira/jira.client";
 import {
@@ -155,7 +156,7 @@ export class JiraFlowService {
 
   /**
    * Builds the "Tempo de Aprovação (IA)" metric — how long cards waited in the
-   * "Aprovação" PRD gate. Only AI-flow cards ever pass through this gate.
+   * "Aprovação PRD/Spec" gate. Only AI-flow cards ever pass through it.
    */
   private computeApprovalWait(issues: JiraSearchResponse["issues"]): FlowStats {
     const esperas: number[] = [];
@@ -223,7 +224,7 @@ export class JiraFlowService {
 
     const endDateExclusive = this.addDays(endDate, 1);
     const jql = encodeURIComponent(
-      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = Done AND status CHANGED TO Done AFTER "${startDate}" AND status CHANGED TO Done BEFORE "${endDateExclusive}"`
+      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status = ${JIRA_STATUS_ID.DONE} AND status CHANGED TO ${JIRA_STATUS_ID.DONE} AFTER "${startDate}" AND status CHANGED TO ${JIRA_STATUS_ID.DONE} BEFORE "${endDateExclusive}"`
     );
 
     while (startAt < total) {
@@ -254,7 +255,7 @@ export class JiraFlowService {
     let total = Number.POSITIVE_INFINITY;
 
     const jql = encodeURIComponent(
-      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status != Backlog AND statusCategory != Done`
+      `issuetype != Epic AND issuetype not in subTaskIssueTypes() AND status != ${JIRA_STATUS_ID.BACKLOG} AND statusCategory != Done`
     );
 
     while (startAt < total) {

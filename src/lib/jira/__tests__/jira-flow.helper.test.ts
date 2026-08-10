@@ -15,7 +15,7 @@ const defaultFields = {
   summary: "Test issue",
   created: "2026-01-01T10:00:00.000Z",
   updated: "2026-01-10T10:00:00.000Z",
-  status: { name: "Em andamento" },
+  status: { id: "3", name: "Em andamento" },
   issuetype: { name: "Story" }
 };
 
@@ -41,8 +41,8 @@ describe("jira-flow.helper", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
-            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] },
+            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
           ]
         }
       });
@@ -54,7 +54,7 @@ describe("jira-flow.helper", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] }
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] }
           ]
         }
       });
@@ -90,10 +90,10 @@ describe("jira-flow.helper", () => {
   describe("getFirstDoneDate", () => {
     it("returns the first entry to Concluído (Portuguese)", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Concluído" } },
+        fields: { ...defaultFields, status: { id: "10012", name: "Concluído" } },
         changelog: {
           histories: [
-            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "Em andamento", toString: "Concluído" }] }
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "Em andamento", to: "10012", toString: "Concluído" }] }
           ]
         }
       });
@@ -103,10 +103,10 @@ describe("jira-flow.helper", () => {
 
     it("returns the first entry to Done (English)", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Concluído" } },
+        fields: { ...defaultFields, status: { id: "10012", name: "Concluído" } },
         changelog: {
           histories: [
-            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
           ]
         }
       });
@@ -126,8 +126,8 @@ describe("jira-flow.helper", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
-            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] },
+            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
           ]
         }
       });
@@ -139,7 +139,7 @@ describe("jira-flow.helper", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "Done" }] }
+            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "10012", toString: "Done" }] }
           ]
         }
       });
@@ -151,7 +151,7 @@ describe("jira-flow.helper", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] }
           ]
         }
       });
@@ -163,10 +163,10 @@ describe("jira-flow.helper", () => {
   describe("isActiveIssue", () => {
     it("returns true for an active non-Done issue that has entered In Progress", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Em andamento" } },
+        fields: { ...defaultFields, status: { id: "3", name: "Em andamento" } },
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] }
           ]
         }
       });
@@ -176,11 +176,11 @@ describe("jira-flow.helper", () => {
 
     it("returns false for a Done issue", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Concluído" } },
+        fields: { ...defaultFields, status: { id: "10012", name: "Concluído" } },
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "To Do", toString: "In Progress" }] },
-            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", fromString: "In Progress", toString: "Done" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "To Do", to: "3", toString: "In Progress" }] },
+            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", from: "3", fromString: "In Progress", to: "10012", toString: "Done" }] }
           ]
         }
       });
@@ -190,7 +190,7 @@ describe("jira-flow.helper", () => {
 
     it("returns false for an issue that has never entered In Progress", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Tarefas pendentes" } }
+        fields: { ...defaultFields, status: { id: "10011", name: "Tarefas pendentes" } }
       });
 
       expect(isActiveIssue(issue)).toBe(false);
@@ -263,12 +263,12 @@ describe("jira-flow.helper", () => {
   });
 
   describe("calculateApprovalWait", () => {
-    it("calculates the wait between entering and leaving Aprovação", () => {
+    it("calculates the wait between entering and leaving the gate", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Aprovação" }] },
-            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", fromString: "Aprovação", toString: "Em andamento" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "Tarefas pendentes", to: "10224", toString: "Aprovação" }] },
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "10224", fromString: "Aprovação", to: "3", toString: "Em andamento" }] }
           ]
         }
       });
@@ -276,12 +276,12 @@ describe("jira-flow.helper", () => {
       expect(calculateApprovalWait(issue)).toBe(2);
     });
 
-    it("measures until now when the card is still in Aprovação", () => {
+    it("measures until now when the card is still in the gate", () => {
       const issue = makeIssue({
-        fields: { ...defaultFields, status: { name: "Aprovação" } },
+        fields: { ...defaultFields, status: { id: "10224", name: "Aprovação" } },
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Aprovação" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "Tarefas pendentes", to: "10224", toString: "Aprovação" }] }
           ]
         }
       });
@@ -289,11 +289,28 @@ describe("jira-flow.helper", () => {
       expect(calculateApprovalWait(issue)).toBeGreaterThan(0);
     });
 
+    it("sums every stay in the gate and ignores the rejected status", () => {
+      // PRD approved, Spec rejected, reworked, approved: three days waiting on
+      // people, plus one day where the AI was reworking and must not count.
+      const issue = makeIssue({
+        changelog: {
+          histories: [
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "Tarefas pendentes", to: "10224", toString: "Aprovação" }] },
+            { created: "2026-01-03T10:00:00.000Z", items: [{ field: "status", from: "10224", fromString: "Aprovação", to: "99999", toString: "PRD/Spec Reprovado" }] },
+            { created: "2026-01-04T10:00:00.000Z", items: [{ field: "status", from: "99999", fromString: "PRD/Spec Reprovado", to: "10224", toString: "Aprovação" }] },
+            { created: "2026-01-05T10:00:00.000Z", items: [{ field: "status", from: "10224", fromString: "Aprovação", to: "3", toString: "Em andamento" }] }
+          ]
+        }
+      });
+
+      expect(calculateApprovalWait(issue)).toBe(3);
+    });
+
     it("returns null when the card never entered Aprovação", () => {
       const issue = makeIssue({
         changelog: {
           histories: [
-            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", fromString: "Tarefas pendentes", toString: "Em andamento" }] }
+            { created: "2026-01-01T10:00:00.000Z", items: [{ field: "status", from: "10011", fromString: "Tarefas pendentes", to: "3", toString: "Em andamento" }] }
           ]
         }
       });
