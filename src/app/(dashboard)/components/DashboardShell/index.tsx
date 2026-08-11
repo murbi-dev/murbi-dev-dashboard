@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, CheckCircle2, ChevronDown, Clock, FileSpreadsheet, Flame, RefreshCw, Search, Sparkles, Stamp } from "lucide-react";
+import { Activity, BarChart3, CheckCircle2, ChevronDown, ClipboardList, Clock, FileSpreadsheet, Flame, RefreshCw, Search, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -169,7 +169,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
     total: issues.length,
     hotfixes: issues.filter((issue) => issue.isHotfix).length,
     pendingHotfixes: issues.filter((issue) => issue.isHotfix && issue.businessStatus !== "Done").length,
-    approval: issues.filter((issue) => issue.businessStatus === "Approval").length,
+    planning: issues.filter((issue) => issue.businessStatus === "Planning").length,
     development: issues.filter((issue) => issue.businessStatus === "In Development").length,
     validation: issues.filter((issue) => issue.businessStatus === "Validation").length,
     done: issues.filter((issue) => issue.businessStatus === "Done").length
@@ -268,7 +268,7 @@ export function DashboardShell({ mode }: { mode: DashboardMode }) {
         <section className={cn("grid gap-1.5", mode === "tv" ? "grid-cols-6" : "grid-cols-2 lg:grid-cols-6")}>
           <SummaryCard icon={Activity} label="Cards no fluxo" value={stats.total} mode={mode} />
           <SummaryCard icon={Flame} label="Hotfixes" value={`${stats.pendingHotfixes}/${stats.hotfixes}`} tone="hotfix" mode={mode} />
-          <SummaryCard icon={Stamp} label="Em Aprovação" value={stats.approval} mode={mode} />
+          <SummaryCard icon={ClipboardList} label="Planejamento" value={stats.planning} mode={mode} />
           <SummaryCard icon={Clock} label="Em Desenvolvimento" value={stats.development} mode={mode} />
           <SummaryCard icon={Search} label="Em Teste" value={stats.validation} mode={mode} />
           <SummaryCard icon={CheckCircle2} label="Em Produção" value={stats.done} tone="done" mode={mode} />

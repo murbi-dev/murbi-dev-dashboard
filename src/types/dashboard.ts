@@ -1,6 +1,6 @@
 export type BusinessStatus =
   | "Waiting"
-  | "Approval"
+  | "Planning"
   | "In Development"
   | "Validation"
   | "Finalizing"
@@ -8,13 +8,12 @@ export type BusinessStatus =
 
 /**
  * Which track a card came from, derived from the parent epic's "Divisão".
- * A card without an epic counts as sustaining — same rule the `dev-flow`
+ * A card without an epic counts as sustaining — same rule the `dev-issue`
  * skill uses to decide which artefacts the card produces.
  */
 export type IssueTrack = "project" | "sustaining";
 
 /** Who the card is still waiting on while it sits in the approval gate. */
-export type PendingApproval = "business" | "dev";
 
 export type IssuePriority = "HOTFIX" | "Highest" | "High" | "Medium" | "Low" | "Lowest" | "Unknown";
 export type IssueComplexity = "PP" | "P" | "M" | "G" | "GG";
@@ -55,7 +54,6 @@ export type DashboardIssue = {
    * Approvals the current checkpoint asked for and that are still missing.
    * Empty while the card sits in the gate means the ball is with the AI.
    */
-  pendingApprovals: PendingApproval[];
   /** Jira status that the dashboard does not know how to place. */
   isUnknownStatus: boolean;
   qaRejectionCount: number;

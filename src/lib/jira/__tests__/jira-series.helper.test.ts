@@ -154,7 +154,7 @@ describe("buildFlowSeries", () => {
         doneIn("MUR-1", "2026-03-01T00:00:00.000Z", "2026-03-03T00:00:00.000Z"),
         doneIn("MUR-2", "2026-03-01T00:00:00.000Z", "2026-03-05T00:00:00.000Z")
       ],
-      approvalIssues: [],
+      planningIssues: [],
       agingIssues: [],
       devFlowFieldId,
       startDate: "2026-03-01",
@@ -173,7 +173,7 @@ describe("buildFlowSeries", () => {
         doneIn("MUR-1", "2026-03-01T00:00:00.000Z", "2026-03-03T00:00:00.000Z", true),
         doneIn("MUR-2", "2026-03-01T00:00:00.000Z", "2026-03-07T00:00:00.000Z")
       ],
-      approvalIssues: [],
+      planningIssues: [],
       agingIssues: [],
       devFlowFieldId,
       startDate: "2026-03-01",
@@ -186,9 +186,9 @@ describe("buildFlowSeries", () => {
 
   it("dates the approval wait by the first entry into the gate", () => {
     const issue = makeIssue("MUR-1", [
-      { from: JIRA_STATUS_ID.PENDING, to: JIRA_STATUS_ID.APPROVAL, at: "2026-03-02T00:00:00.000Z" },
+      { from: JIRA_STATUS_ID.PENDING, to: JIRA_STATUS_ID.PLANNING, at: "2026-03-02T00:00:00.000Z" },
       {
-        from: JIRA_STATUS_ID.APPROVAL,
+        from: JIRA_STATUS_ID.PLANNING,
         to: JIRA_STATUS_ID.IN_PROGRESS,
         at: "2026-03-04T00:00:00.000Z"
       }
@@ -196,15 +196,15 @@ describe("buildFlowSeries", () => {
 
     const series = buildFlowSeries({
       doneIssues: [],
-      approvalIssues: [issue],
+      planningIssues: [issue],
       agingIssues: [],
       devFlowFieldId,
       startDate: "2026-03-01",
       endDate: "2026-03-05"
     });
 
-    expect(series.daily[1].approvalWaitAverage).toBe(2);
-    expect(series.daily[3].approvalWaitAverage).toBeNull();
+    expect(series.daily[1].planningTimeAverage).toBe(2);
+    expect(series.daily[3].planningTimeAverage).toBeNull();
   });
 
   it("dates the aging by the entry into In Progress", () => {
@@ -216,7 +216,7 @@ describe("buildFlowSeries", () => {
 
     const series = buildFlowSeries({
       doneIssues: [],
-      approvalIssues: [],
+      planningIssues: [],
       agingIssues: [issue],
       devFlowFieldId,
       startDate: "2026-03-01",

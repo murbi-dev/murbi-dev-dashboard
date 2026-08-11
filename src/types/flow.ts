@@ -38,7 +38,7 @@ export type FlowMetricsPayload = {
    * This gate is exclusive to the AI flow (`Dev IA`), so this metric is
    * inherently AI-only.
    */
-  approvalWait: FlowStats;
+  planningTime: FlowStats;
   /** Evolution of the indicators inside the range, at every granularity. */
   series: SeriesByGranularity<FlowSeriesPoint>;
 };
@@ -52,7 +52,7 @@ export type FlowSeriesPoint = SeriesBucket & {
   leadTimeP50: number | null;
   leadTimeAiAverage: number | null;
   leadTimeHumanAverage: number | null;
-  approvalWaitAverage: number | null;
+  planningTimeAverage: number | null;
   agingAverage: number | null;
   deliveries: number;
 };

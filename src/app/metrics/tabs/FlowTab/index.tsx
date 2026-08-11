@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { FlowSkeleton } from "./components/FlowSkeleton";
 import { LeadTimeSection } from "./components/LeadTimeSection";
-import { ApprovalWaitSection } from "./components/ApprovalWaitSection";
+import { PlanningTimeSection } from "./components/PlanningTimeSection";
 import { AgingSection } from "./components/AgingSection";
 import { FlowTrendSection } from "./components/FlowTrendSection";
 import type { FlowMetricsPayload } from "@/types/flow";
@@ -154,8 +154,8 @@ export function FlowTab() {
             </Card>
           )}
 
-          {data.approvalWait ? (
-            <ApprovalWaitSection data={data.approvalWait} />
+          {data.planningTime ? (
+            <PlanningTimeSection data={data.planningTime} />
           ) : (
             <Card className="shadow-operational">
               <CardContent className="p-8 text-center text-sm text-muted-foreground">

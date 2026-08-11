@@ -17,22 +17,19 @@ describe("status mapper", () => {
     expect(mapJiraStatusToBusinessStatus(JIRA_STATUS_ID.DONE)).toBe("Done");
   });
 
-  it("maps both gate statuses to the Approval column", () => {
-    expect(mapJiraStatusToBusinessStatus(JIRA_STATUS_ID.APPROVAL)).toBe("Approval");
-    expect(mapJiraStatusToBusinessStatus(JIRA_STATUS_ID.APPROVAL_REJECTED)).toBe("Approval");
+  it("maps the planning status to the Planning column", () => {
+    expect(mapJiraStatusToBusinessStatus(JIRA_STATUS_ID.PLANNING)).toBe("Planning");
   });
 
-  it("never leaves a gate status in Pendente", () => {
-    for (const id of [JIRA_STATUS_ID.APPROVAL, JIRA_STATUS_ID.APPROVAL_REJECTED]) {
-      expect(isMappedJiraStatus(id)).toBe(true);
-      expect(mapJiraStatusToBusinessStatus(id)).not.toBe("Waiting");
-    }
+  it("never leaves the planning status in Pendente", () => {
+    expect(isMappedJiraStatus(JIRA_STATUS_ID.PLANNING)).toBe(true);
+    expect(mapJiraStatusToBusinessStatus(JIRA_STATUS_ID.PLANNING)).not.toBe("Waiting");
   });
 
   it("ignores the display name entirely", () => {
     // The name is translated per the language of the account that queries and
     // changes on rename. Neither must affect the mapping.
-    expect(isMappedJiraStatus("Aprovação")).toBe(false);
+    expect(isMappedJiraStatus("Planejamento")).toBe(false);
     expect(isMappedJiraStatus("In Progress")).toBe(false);
     expect(isMappedJiraStatus("Em andamento")).toBe(false);
   });
@@ -46,10 +43,10 @@ describe("status mapper", () => {
     expect(mapJiraStatusToBusinessStatus("99999")).toBe("Waiting");
   });
 
-  it("keeps Approval between Waiting and In Development", () => {
+  it("keeps Planning between Waiting and In Development", () => {
     expect(BUSINESS_STATUSES).toEqual([
       "Waiting",
-      "Approval",
+      "Planning",
       "In Development",
       "Validation",
       "Finalizing",

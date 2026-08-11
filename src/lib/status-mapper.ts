@@ -2,7 +2,7 @@ import type { BusinessStatus } from "@/types/dashboard";
 
 export const BUSINESS_STATUSES: BusinessStatus[] = [
   "Waiting",
-  "Approval",
+  "Planning",
   "In Development",
   "Validation",
   "Finalizing",
@@ -23,8 +23,7 @@ export const BUSINESS_STATUSES: BusinessStatus[] = [
 export const JIRA_STATUS_ID = {
   BACKLOG: "10191",
   PENDING: "10011",
-  APPROVAL: "10224",
-  APPROVAL_REJECTED: "10227",
+  PLANNING: "10224",
   IN_PROGRESS: "3",
   PULL_REQUEST: "10013",
   READY_FOR_QA: "10091",
@@ -38,7 +37,7 @@ export type JiraStatusId = (typeof JIRA_STATUS_ID)[keyof typeof JIRA_STATUS_ID];
 
 export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
   Waiting: [JIRA_STATUS_ID.PENDING],
-  Approval: [JIRA_STATUS_ID.APPROVAL, JIRA_STATUS_ID.APPROVAL_REJECTED],
+  Planning: [JIRA_STATUS_ID.PLANNING],
   "In Development": [JIRA_STATUS_ID.IN_PROGRESS, JIRA_STATUS_ID.PULL_REQUEST, JIRA_STATUS_ID.READY_FOR_QA],
   Validation: [JIRA_STATUS_ID.QA_TESTING],
   Finalizing: [JIRA_STATUS_ID.READY_FOR_PROD],
@@ -46,12 +45,11 @@ export const STATUS_MAPPING: Record<BusinessStatus, string[]> = {
 };
 
 /**
- * Order used inside the Approval and In Development columns, so the Jira status
+ * Order used inside the Planning and In Development columns, so the Jira status
  * dropdown follows the flow instead of the alphabet. By id, like everything else.
  */
 export const COLUMN_STATUS_ID_ORDER: string[] = [
-  JIRA_STATUS_ID.APPROVAL,
-  JIRA_STATUS_ID.APPROVAL_REJECTED,
+  JIRA_STATUS_ID.PLANNING,
   JIRA_STATUS_ID.IN_PROGRESS,
   JIRA_STATUS_ID.PULL_REQUEST,
   JIRA_STATUS_ID.READY_FOR_QA

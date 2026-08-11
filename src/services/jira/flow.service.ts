@@ -40,7 +40,7 @@
  * The payload also carries `series`, the evolution of the same indicators
  * inside the range at daily, weekly and monthly granularity. Each indicator is
  * bucketed by the date that dates it — the delivery for Lead Time, the first
- * entry into the approval gate for Tempo de Aprovação, the first entry into In
+ * entry into the approval gate for Tempo de Planejamento, the first entry into In
  * Progress for Aging — and uses the same issue set as its headline card. It is
  * built from the issues already fetched here, so it costs no extra Jira
  * round-trip. See `src/lib/jira/jira-series.helper.ts`.
@@ -59,7 +59,7 @@ import { JiraClient } from "@/clients/jira/jira.client";
 import {
   calculateLeadTime,
   calculateAging,
-  calculateApprovalWait,
+  calculatePlanningTime,
   isActiveIssue,
   isAiDevIssue,
   getFirstInProgressDate,
@@ -123,10 +123,10 @@ export class JiraFlowService {
         leadTimeByFlow: this.computeStatsByFlow(doneIssues, devFlowFieldId, calculateLeadTime),
         aging: this.computeAging(activeInPeriod, devFlowFieldId),
         agingByFlow: this.computeStatsByFlow(activeInPeriod, devFlowFieldId, calculateAging),
-        approvalWait: this.computeApprovalWait([...doneIssues, ...activeIssues]),
+        planningTime: this.computePlanningTime([...doneIssues, ...activeIssues]),
         series: buildFlowSeries({
           doneIssues,
-          approvalIssues: [...doneIssues, ...activeIssues],
+          planningIssues: [...doneIssues, ...activeIssues],
           agingIssues: activeInPeriod,
           devFlowFieldId,
           startDate,
@@ -175,14 +175,14 @@ export class JiraFlowService {
   }
 
   /**
-   * Builds the "Tempo de Aprovação (IA)" metric — how long cards waited in the
+   * Builds the "Tempo de Planejamento (IA)" metric — how long cards waited in the
    * "Aprovação PRD/Spec" gate. Only AI-flow cards ever pass through it.
    */
-  private computeApprovalWait(issues: JiraSearchResponse["issues"]): FlowStats {
+  private computePlanningTime(issues: JiraSearchResponse["issues"]): FlowStats {
     const esperas: number[] = [];
 
     for (const issue of issues) {
-      const espera = calculateApprovalWait(issue);
+      const espera = calculatePlanningTime(issue);
       if (espera !== null) {
         esperas.push(espera);
       }
