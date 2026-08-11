@@ -341,8 +341,8 @@ describe("JiraFlowService", () => {
     expect(result.leadTimeByFlow.human!.totalIssues).toBe(1);
     expect(result.leadTimeByFlow.human!.average).toBe(2);
 
-    expect(result.approvalWait).not.toBeNull();
-    expect(result.approvalWait!.totalIssues).toBe(1);
-    expect(result.approvalWait!.average).toBe(2);
+    expect(result.planningTime).not.toBeNull();
+    expect(result.planningTime!.totalIssues).toBe(1);
+    expect(result.planningTime!.average).toBe(2);
   });
 });

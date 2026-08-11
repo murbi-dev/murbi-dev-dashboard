@@ -4,7 +4,6 @@ export class JiraFieldMetadataMapper {
   private static readonly complexityFieldNames = new Set(["complexidade"]);
   private static readonly devFlowFieldNames = new Set(["fluxo dev"]);
   private static readonly divisionFieldNames = new Set(["divisao"]);
-  private static readonly pendingApprovalFieldNames = new Set(["aprovacao pendente"]);
   private static readonly epicLinkFieldNames = new Set(["epic link"]);
   private static readonly epicNameFieldNames = new Set(["epic name"]);
   private static readonly issueColorFieldNames = new Set(["issue color"]);
@@ -25,10 +24,6 @@ export class JiraFieldMetadataMapper {
 
     const divisionFieldId = fields.find((field) =>
       JiraFieldMetadataMapper.divisionFieldNames.has(this.normalizeFieldName(field.name))
-    )?.id;
-
-    const pendingApprovalFieldId = fields.find((field) =>
-      JiraFieldMetadataMapper.pendingApprovalFieldNames.has(this.normalizeFieldName(field.name))
     )?.id;
 
     const epicLinkFieldId = fields.find(
@@ -56,7 +51,6 @@ export class JiraFieldMetadataMapper {
       complexityFieldId,
       devFlowFieldId,
       divisionFieldId,
-      pendingApprovalFieldId,
       epicLinkFieldId,
       epicNameFieldId,
       issueColorFieldId,

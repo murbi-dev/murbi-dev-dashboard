@@ -16,7 +16,7 @@
  * |---|---|
  * | Entregas, retrabalho, QA rejections, Delivery Quality Rate | the Done transition |
  * | Lead Time (total, P50, IA, Humano) | the Done transition |
- * | Tempo de Aprovação (IA) | the **first** entry into the approval gate |
+ * | Tempo de Planejamento (IA) | the **first** entry into the planning stage |
  * | Aging | the first entry into In Progress |
  *
  * Each indicator uses the same issue set as its headline card, so the chart
@@ -34,10 +34,10 @@
 import { buildBuckets, findBucketIndex } from "@/lib/date-buckets";
 import {
   calculateAging,
-  calculateApprovalWait,
+  calculatePlanningTime,
   calculateLeadTime,
   calculatePercentile,
-  getFirstApprovalDate,
+  getFirstPlanningDate,
   getFirstInProgressDate,
   getStatusHistory,
   isAiDevIssue
@@ -133,12 +133,12 @@ export function buildQualitySeries(
 }
 
 /**
- * Builds the Flow series (Lead Time, Tempo de Aprovação and Aging) for every
+ * Builds the Flow series (Lead Time, Tempo de Planejamento and Aging) for every
  * granularity.
  *
  * @param input.doneIssues - Issues delivered within the range.
- * @param input.approvalIssues - Every issue that may have passed through the
- *   approval gate (delivered plus active), matching the headline metric.
+ * @param input.planningIssues - Every issue that may have passed through the
+ *   planning stage (delivered plus active), matching the headline metric.
  * @param input.agingIssues - Active issues that started within the range,
  *   matching the headline Aging card.
  * @param input.devFlowFieldId - Dynamically resolved id of the `Fluxo Dev`
@@ -146,19 +146,19 @@ export function buildQualitySeries(
  */
 export function buildFlowSeries(input: {
   doneIssues: JiraIssue[];
-  approvalIssues: JiraIssue[];
+  planningIssues: JiraIssue[];
   agingIssues: JiraIssue[];
   devFlowFieldId?: string;
   startDate: string;
   endDate: string;
 }): SeriesByGranularity<FlowSeriesPoint> {
-  const { doneIssues, approvalIssues, agingIssues, devFlowFieldId, startDate, endDate } = input;
+  const { doneIssues, planningIssues, agingIssues, devFlowFieldId, startDate, endDate } = input;
 
   return buildForEveryGranularity(startDate, endDate, (buckets) => {
     const leadTimes = buckets.map<number[]>(() => []);
     const aiLeadTimes = buckets.map<number[]>(() => []);
     const humanLeadTimes = buckets.map<number[]>(() => []);
-    const approvalWaits = buckets.map<number[]>(() => []);
+    const planningTimes = buckets.map<number[]>(() => []);
     const agings = buckets.map<number[]>(() => []);
     const deliveries = buckets.map(() => 0);
 
@@ -177,15 +177,15 @@ export function buildFlowSeries(input: {
       (isAiDevIssue(issue, devFlowFieldId) ? aiLeadTimes : humanLeadTimes)[index].push(leadTime);
     }
 
-    for (const issue of approvalIssues) {
-      const index = findBucketIndex(buckets, getFirstApprovalDate(issue));
+    for (const issue of planningIssues) {
+      const index = findBucketIndex(buckets, getFirstPlanningDate(issue));
 
       if (index < 0) continue;
 
-      const wait = calculateApprovalWait(issue);
+      const wait = calculatePlanningTime(issue);
 
       if (wait !== null) {
-        approvalWaits[index].push(wait);
+        planningTimes[index].push(wait);
       }
     }
 
@@ -207,7 +207,7 @@ export function buildFlowSeries(input: {
       leadTimeP50: median(leadTimes[index]),
       leadTimeAiAverage: average(aiLeadTimes[index]),
       leadTimeHumanAverage: average(humanLeadTimes[index]),
-      approvalWaitAverage: average(approvalWaits[index]),
+      planningTimeAverage: average(planningTimes[index]),
       agingAverage: average(agings[index]),
       deliveries: deliveries[index]
     }));

@@ -6,7 +6,7 @@ import {
   isActiveIssue,
   calculatePercentile,
   isAiDevIssue,
-  calculateApprovalWait,
+  calculatePlanningTime,
   buildFlowStats
 } from "@/lib/jira/jira-flow.helper";
 import type { JiraIssue } from "@/types/jira";
@@ -262,7 +262,7 @@ describe("jira-flow.helper", () => {
     });
   });
 
-  describe("calculateApprovalWait", () => {
+  describe("calculatePlanningTime", () => {
     it("calculates the wait between entering and leaving the gate", () => {
       const issue = makeIssue({
         changelog: {
@@ -273,7 +273,7 @@ describe("jira-flow.helper", () => {
         }
       });
 
-      expect(calculateApprovalWait(issue)).toBe(2);
+      expect(calculatePlanningTime(issue)).toBe(2);
     });
 
     it("measures until now when the card is still in the gate", () => {
@@ -286,7 +286,7 @@ describe("jira-flow.helper", () => {
         }
       });
 
-      expect(calculateApprovalWait(issue)).toBeGreaterThan(0);
+      expect(calculatePlanningTime(issue)).toBeGreaterThan(0);
     });
 
     it("sums every stay in the gate and ignores the rejected status", () => {
@@ -303,7 +303,7 @@ describe("jira-flow.helper", () => {
         }
       });
 
-      expect(calculateApprovalWait(issue)).toBe(3);
+      expect(calculatePlanningTime(issue)).toBe(3);
     });
 
     it("returns null when the card never entered Aprovação", () => {
@@ -315,7 +315,7 @@ describe("jira-flow.helper", () => {
         }
       });
 
-      expect(calculateApprovalWait(issue)).toBeNull();
+      expect(calculatePlanningTime(issue)).toBeNull();
     });
   });
 

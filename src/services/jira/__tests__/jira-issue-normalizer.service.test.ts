@@ -97,10 +97,9 @@ describe("JiraIssueNormalizerService", () => {
     expect(emptyIssue.isAiDev).toBe(false);
   });
 
-  describe("trilha e aprovação pendente", () => {
+  describe("trilha e status", () => {
     const fieldMetadata = {
-      divisionFieldId: "customfield_10415",
-      pendingApprovalFieldId: "customfield_10483"
+      divisionFieldId: "customfield_10415"
     };
 
     function normalize(fields: Record<string, unknown>, epicDivision?: string) {
@@ -133,27 +132,13 @@ describe("JiraIssueNormalizerService", () => {
       ).toBe("sustaining");
     });
 
-    it("reads both values of the Aprovação Pendente multiselect", () => {
-      const issue = normalize({
-        customfield_10483: [{ value: "Negócio" }, { value: "Dev" }]
-      });
-
-      expect(issue.pendingApprovals).toEqual(["business", "dev"]);
-    });
-
-    it("returns no pending approvals when the field is empty or absent", () => {
-      expect(normalize({ customfield_10483: [] }).pendingApprovals).toEqual([]);
-      expect(normalize({}).pendingApprovals).toEqual([]);
-    });
-
     it("flags a Jira status the dashboard cannot place", () => {
       expect(normalize({ status: { id: "99999", name: "Status novo" } }).isUnknownStatus).toBe(true);
-      expect(normalize({ status: { id: "10224", name: "Aprovação" } }).isUnknownStatus).toBe(false);
+      expect(normalize({ status: { id: "10224", name: "Planejamento" } }).isUnknownStatus).toBe(false);
     });
 
-    it("puts both gate statuses in the Approval column", () => {
-      expect(normalize({ status: { id: "10224", name: "Aprovação" } }).businessStatus).toBe("Approval");
-      expect(normalize({ status: { id: "10227", name: "PRD Reprovado" } }).businessStatus).toBe("Approval");
+    it("puts the planning status in the Planning column", () => {
+      expect(normalize({ status: { id: "10224", name: "Planejamento" } }).businessStatus).toBe("Planning");
     });
   });
 });

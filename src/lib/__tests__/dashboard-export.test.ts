@@ -25,7 +25,6 @@ function issue(overrides: Partial<DashboardIssue> = {}): DashboardIssue {
     isHotfix: true,
     isAiDev: true,
     track: "sustaining",
-    pendingApprovals: [],
     isUnknownStatus: false,
     qaRejectionCount: 2,
     qaRejections: [],

@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { HelpCircle } from "lucide-react";
 
-type Metric = "leadTime" | "aging" | "approvalWait" | "p50" | "p75" | "p90";
+type Metric = "leadTime" | "aging" | "planningTime" | "p50" | "p75" | "p90";
 
 const content: Record<Metric, { title: string; sections: Array<{ label: string; text: string }> }> = {
-  approvalWait: {
-    title: "Tempo de Aprovação (IA)",
+  planningTime: {
+    title: "Tempo de Planejamento (IA)",
     sections: [
       {
         label: "O que mede",

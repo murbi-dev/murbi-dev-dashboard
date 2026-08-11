@@ -24,7 +24,6 @@ function issue(overrides: {
     businessStatus: overrides.businessStatus,
     isHotfix: false,
     track: "sustaining",
-    pendingApprovals: [],
     isUnknownStatus: false,
     isAiDev: false,
     qaRejectionCount: overrides.qaRejectionCount,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { AlertTriangle, Briefcase, CalendarClock, Clock3, Flame, LifeBuoy, RotateCcw, Sparkles, Stamp, UserCircle2, X } from 'lucide-react';
+import { AlertTriangle, Briefcase, CalendarClock, Clock3, Flame, LifeBuoy, RotateCcw, Sparkles, UserCircle2, X } from 'lucide-react';
 import { getStaleLevel } from '@/lib/alerts';
 import {
   formatRelativeAge,
@@ -10,7 +10,7 @@ import {
 } from '@/lib/time';
 import { formatDueDate, getDueDateTone } from '@/lib/due-date';
 import { getPriorityLabel } from '@/lib/display';
-import type { DashboardIssue, PendingApproval } from '@/types/dashboard';
+import type { DashboardIssue } from '@/types/dashboard';
 import { Badge } from '@/components/ui/Badge';
 import { cn } from '@/lib/utils';
 
@@ -49,17 +49,6 @@ const trackClass = {
     'border-slate-300 bg-slate-50 text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
 } as const;
 
-const pendingApprovalLabel: Record<PendingApproval, string> = {
-  business: 'Negócio',
-  dev: 'Dev',
-};
-
-const pendingApprovalClass: Record<PendingApproval, string> = {
-  business:
-    'border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-950/60 dark:text-amber-200',
-  dev: 'border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-700 dark:bg-sky-950/60 dark:text-sky-200',
-};
-
 const rejectionDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   day: '2-digit',
   month: '2-digit',
@@ -91,10 +80,6 @@ export function IssueCard({
   const epicColorStyle = issue.epic?.color
     ? { backgroundColor: issue.epic.color }
     : undefined;
-  const isInApproval = issue.businessStatus === 'Approval';
-  // Empty while the card sits in the gate does not mean "nobody owes it":
-  // it means the ball is with the AI, exactly like the ai-flow-radar reads it.
-  const isWaitingOnAi = isInApproval && issue.pendingApprovals.length === 0;
   const TrackIcon = issue.track === 'project' ? Briefcase : LifeBuoy;
 
   return (
@@ -201,33 +186,6 @@ export function IssueCard({
           ) : null}
           Épico: {issue.epic.name} ({issue.epic.key})
         </Badge>
-      ) : null}
-
-      {isInApproval ? (
-        <div className="mt-1.5 flex flex-wrap items-center gap-1">
-          {isWaitingOnAi ? (
-            <Badge
-              variant="outline"
-              className="gap-1 border-violet-300 bg-violet-100 font-semibold text-violet-800 dark:border-violet-700 dark:bg-violet-950/60 dark:text-violet-200"
-              title="Aprovação Pendente vazio — a bola está com a IA"
-            >
-              <Sparkles className="h-3 w-3" />
-              Aguardando IA
-            </Badge>
-          ) : (
-            issue.pendingApprovals.map((approval) => (
-              <Badge
-                key={approval}
-                variant="outline"
-                className={cn('gap-1 border font-semibold', pendingApprovalClass[approval])}
-                title={`Aguardando aprovação de ${pendingApprovalLabel[approval]}`}
-              >
-                <Stamp className="h-3 w-3" />
-                {pendingApprovalLabel[approval]}
-              </Badge>
-            ))
-          )}
-        </div>
       ) : null}
 
       <div className="mt-2 flex min-w-0 items-center justify-between gap-2">

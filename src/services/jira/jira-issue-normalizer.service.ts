@@ -1,6 +1,6 @@
 import { isMappedJiraStatus, mapJiraStatusToBusinessStatus } from "@/lib/status-mapper";
 import { getQaRejectionEvents, isHotfixIssue } from "@/lib/jira/jira-metrics.helper";
-import type { DashboardIssue, IssueComplexity, IssuePriority, IssueTrack, PendingApproval } from "@/types/dashboard";
+import type { DashboardIssue, IssueComplexity, IssuePriority, IssueTrack } from "@/types/dashboard";
 import type { JiraBoard, JiraDashboardFieldMetadata, JiraEpicDetailsByKey, JiraIssue } from "@/types/jira";
 
 export class JiraIssueNormalizerService {
@@ -10,11 +10,6 @@ export class JiraIssueNormalizerService {
   private static readonly aiDevFlowValue = "dev ia";
   /** Value of the epic's "Divisão" field that marks the project track. */
   private static readonly projectDivisionValue = "projeto";
-  /** Values of the "Aprovação Pendente" multiselect, mapped to our own names. */
-  private static readonly pendingApprovalValues: Record<string, PendingApproval> = {
-    negocio: "business",
-    dev: "dev"
-  };
 
   normalizeIssue(
     issue: JiraIssue,
@@ -52,7 +47,6 @@ export class JiraIssueNormalizerService {
       isHotfix: isHotfixIssue(issue),
       isAiDev: this.getIsAiDev(issue, fieldMetadata.devFlowFieldId),
       track: this.getTrack(epic, epicDetailsByKey),
-      pendingApprovals: this.getPendingApprovals(issue, fieldMetadata.pendingApprovalFieldId),
       isUnknownStatus: !isMappedJiraStatus(jiraStatusId),
       qaRejectionCount: qaRejections.length,
       qaRejections,
@@ -107,7 +101,7 @@ export class JiraIssueNormalizerService {
   /**
    * A card belongs to the project track only when its epic says so. No epic,
    * empty "Divisão" or any other value means sustaining — the same rule the
-   * `dev-flow` skill applies when it decides which artefacts to produce.
+   * `dev-issue` skill applies when it decides which artefacts to produce.
    */
   private getTrack(epic: DashboardIssue["epic"], epicDetailsByKey: JiraEpicDetailsByKey): IssueTrack {
     const division = epic?.key ? epicDetailsByKey[epic.key]?.division : undefined;
@@ -116,12 +110,6 @@ export class JiraIssueNormalizerService {
       JiraIssueNormalizerService.projectDivisionValue
       ? "project"
       : "sustaining";
-  }
-
-  private getPendingApprovals(issue: JiraIssue, fieldId?: string): PendingApproval[] {
-    return this.getMultiOptionFieldValues(issue, fieldId)
-      .map((value) => JiraIssueNormalizerService.pendingApprovalValues[this.normalizeOptionValue(value)])
-      .filter((approval): approval is PendingApproval => Boolean(approval));
   }
 
   private normalizeOptionValue(value: string): string {

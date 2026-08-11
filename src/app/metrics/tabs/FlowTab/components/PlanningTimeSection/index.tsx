@@ -12,12 +12,12 @@ function formatDays(value: number): string {
   return `${formatNumber(value)} dias`;
 }
 
-export function ApprovalWaitSection({ data }: { data: NonNullable<FlowMetricsPayload["approvalWait"]> }) {
+export function PlanningTimeSection({ data }: { data: NonNullable<FlowMetricsPayload["planningTime"]> }) {
   return (
     <section>
       <div className="mb-1 flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" aria-hidden />
-        <h2 className="text-base font-semibold">Tempo de Aprovação (IA)</h2>
+        <h2 className="text-base font-semibold">Tempo de Planejamento (IA)</h2>
       </div>
       <p className="mb-3 text-xs text-muted-foreground">
         Espera no gate de PRD — exclusivo do fluxo de IA (Dev IA).
@@ -34,7 +34,7 @@ export function ApprovalWaitSection({ data }: { data: NonNullable<FlowMetricsPay
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <p className="text-3xl font-bold">{formatDays(data.average)}</p>
-            <TooltipContent metric="approvalWait" />
+            <TooltipContent metric="planningTime" />
           </CardContent>
         </Card>
 

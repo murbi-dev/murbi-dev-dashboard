@@ -10,7 +10,7 @@ import type { FlowMetricsPayload, FlowSeriesPoint } from "@/types/flow";
  * Indicadores de fluxo que fazem sentido no tempo.
  *
  * Cada um é datado pelo evento que o produz: Lead Time e entregas pela conclusão,
- * Tempo de Aprovação pela primeira entrada no gate, Aging pela entrada em
+ * Tempo de Planejamento pela primeira entrada no gate, Aging pela entrada em
  * andamento. Assim o gráfico decompõe o número do card acima dele.
  *
  * A ordem dos tokens de cor foi validada para daltonismo (ver `globals.css`);
@@ -54,12 +54,12 @@ const FLOW_TREND_SERIES: TrendSeriesDefinition<FlowSeriesPoint>[] = [
     getValue: (point) => point.agingAverage
   },
   {
-    id: "approvalWaitAverage",
-    label: "Tempo de Aprovação (IA)",
+    id: "planningTimeAverage",
+    label: "Tempo de Planejamento (IA)",
     unit: "days",
     color: "var(--chart-6)",
     isAi: true,
-    getValue: (point) => point.approvalWaitAverage
+    getValue: (point) => point.planningTimeAverage
   },
   {
     id: "deliveries",

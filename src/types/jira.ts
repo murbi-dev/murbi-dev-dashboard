@@ -85,8 +85,6 @@ export type JiraDashboardFieldMetadata = {
   devFlowFieldId?: string;
   /** "Divisão" — lives on the epic, not on the card. */
   divisionFieldId?: string;
-  /** "Aprovação Pendente" — multiselect, so it arrives as an array. */
-  pendingApprovalFieldId?: string;
   epicLinkFieldId?: string;
   epicNameFieldId?: string;
   issueColorFieldId?: string;

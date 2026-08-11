@@ -6,7 +6,7 @@ import { COLUMN_STATUS_ID_ORDER } from "@/lib/status-mapper";
 
 const statusAccent: Record<BusinessStatus, string> = {
   Waiting: "bg-slate-500",
-  Approval: "bg-violet-600",
+  Planning: "bg-violet-600",
   "In Development": "bg-blue-600",
   Validation: "bg-teal-600",
   Finalizing: "bg-amber-600",

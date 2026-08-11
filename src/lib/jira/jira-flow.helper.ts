@@ -72,11 +72,10 @@ const DONE_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.DONE]);
  * Status where the card waits on a person. Exclusive to the AI flow
  * (`Fluxo Dev = Dev IA`).
  *
- * The rejected status is deliberately **not** here: while the card sits there
- * the ball is with the AI reworking the artefact, not with a person, and this
- * metric measures how long the AI waits for us.
+ * Planning is where the AI writes the spec and, when the card asks for it, the
+ * design and the tasks. The metric measures how long that planning takes.
  */
-const APPROVAL_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.APPROVAL]);
+const PLANNING_ENTRY_IDS = new Set<string>([JIRA_STATUS_ID.PLANNING]);
 
 /**
  * Normalised value of the `Fluxo Dev` field that flags an AI-driven card.
@@ -87,7 +86,7 @@ const AI_DEV_FLOW_VALUE = "dev ia";
  * Extracts all status-change events from the changelog, sorted oldest first.
  *
  * This is the single reader of the status changelog: the flow metrics, the
- * approval gate and the metrics time series all go through it, so the
+ * planning stage and the metrics time series all go through it, so the
  * "compare ids, never names" rule lives in one place.
  */
 export function getStatusHistory(issue: JiraIssue): Array<{
@@ -156,19 +155,19 @@ export function getFirstDoneDate(issue: JiraIssue): string | null {
 }
 
 /**
- * Returns the date of the **first** time this issue entered the approval gate.
+ * Returns the date of the **first** time this issue entered the planning stage.
  *
- * Used to place the "Tempo de Aprovação (IA)" of a card in a time bucket: the
+ * Used to place the "Tempo de Planejamento (IA)" of a card in a time bucket: the
  * wait itself is a sum of several stays, so the moment the card first asked for
  * approval is what dates it.
  *
  * @returns ISO date string, or `null` if the card never entered the gate.
  */
-export function getFirstApprovalDate(issue: JiraIssue): string | null {
+export function getFirstPlanningDate(issue: JiraIssue): string | null {
   const history = getStatusHistory(issue);
 
   for (const event of history) {
-    if (APPROVAL_ENTRY_IDS.has(event.toId)) {
+    if (PLANNING_ENTRY_IDS.has(event.toId)) {
       return event.changedAt;
     }
   }
@@ -246,7 +245,7 @@ export function calculatePercentile(sortedValues: number[], percentile: number):
 
 /**
  * Returns `true` if the card is AI-driven (`Fluxo Dev = Dev IA`). Reads the
- * dynamically-resolved dev-flow field id; without it, defaults to `false`.
+ * dynamically-resolved Fluxo Dev field id; without it, defaults to `false`.
  */
 export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean {
   if (!devFlowFieldId) return false;
@@ -263,9 +262,9 @@ export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean
 }
 
 /**
- * Calculates how long a card waited on a person in the approval gate.
+ * Calculates how long the AI spent planning the card.
  *
- * Sums **every** stay in "Aprovação PRD/Spec", not just the first one. A card
+ * Sums **every** stay in Planejamento, not just the first one. A card
  * now passes through the gate more than once by design — a rejection sends it
  * to "PRD/Spec Reprovado" and back, and sustaining cards are approved twice
  * (PRD, then Spec) — so measuring only the first stay would undercount. Time
@@ -274,22 +273,22 @@ export function isAiDevIssue(issue: JiraIssue, devFlowFieldId?: string): boolean
  * If the card is still sitting in the gate, the open stay counts until now.
  *
  * @returns Calendar days (rounded to 1 decimal), or `null` if the card never
- *   entered the approval gate.
+ *   entered the planning stage.
  */
-export function calculateApprovalWait(issue: JiraIssue): number | null {
+export function calculatePlanningTime(issue: JiraIssue): number | null {
   const history = getStatusHistory(issue);
   let entryMs: number | null = null;
   let totalMs = 0;
   let everEntered = false;
 
   for (const event of history) {
-    if (entryMs === null && APPROVAL_ENTRY_IDS.has(event.toId)) {
+    if (entryMs === null && PLANNING_ENTRY_IDS.has(event.toId)) {
       entryMs = new Date(event.changedAt).getTime();
       everEntered = true;
       continue;
     }
 
-    if (entryMs !== null && APPROVAL_ENTRY_IDS.has(event.fromId)) {
+    if (entryMs !== null && PLANNING_ENTRY_IDS.has(event.fromId)) {
       const exitMs = new Date(event.changedAt).getTime();
 
       if (exitMs > entryMs) {
@@ -300,7 +299,7 @@ export function calculateApprovalWait(issue: JiraIssue): number | null {
     }
   }
 
-  if (entryMs !== null && APPROVAL_ENTRY_IDS.has(issue.fields.status.id)) {
+  if (entryMs !== null && PLANNING_ENTRY_IDS.has(issue.fields.status.id)) {
     totalMs += Date.now() - entryMs;
     everEntered = true;
   }
