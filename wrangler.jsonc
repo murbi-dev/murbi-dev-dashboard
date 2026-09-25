@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "murbi-dev-dashboard",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "vinext/server/fetch-handler",
+  "assets": {
+    "directory": "dist/client",
+    "not_found_handling": "none",
+    "binding": "ASSETS",
+  },
+  "images": {
+    "binding": "IMAGES",
+  },
+  "account_id": "2c7b075a2929815b19bf1b2cfdf52e3f",
+  "vars": {
+    "DASHBOARD_AUTH_USER": "murbi",
+    "JIRA_BASE_URL": "https://murbi-team.atlassian.net",
+    "JIRA_BOARD_ID": "76",
+    "JIRA_EMAIL": "igor.faoro17@gmail.com",
+  },
+}
